@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Chef Hat Shadow/Border (Neo-Brutalist style thick border) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M32,60c0,0 -8,-1 -8,8s4,8 8,8h44c4,0 8,0 8,-8s-8,-8 -8,-8c0,-14 -6,-24 -22,-24s-22,10 -22,24z" />
+    <!-- Chef Hat Main Body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,60c0,0 -5,0 -5,5s3,5 5,5h38c2,0 5,0 5,-5s-5,-5 -5,-5c0,-12 -5,-20 -19,-20s-19,8 -19,20z" />
+
+    <!-- AI Sparkle (Vibrant Red with Black Border) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M72,32l3,9l9,3l-9,3l-3,9l-3,-9l-9,-3l9,-3z" />
+
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M72,35l1.5,4.5l4.5,1.5l-4.5,1.5l-1.5,4.5l-1.5,-4.5l-4.5,-1.5l4.5,-1.5z" />
+</vector>

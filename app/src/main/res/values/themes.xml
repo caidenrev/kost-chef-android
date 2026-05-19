@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Chefairevan" parent="Theme.MaterialComponents.Light" />
+</resources>
