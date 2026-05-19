@@ -127,7 +127,7 @@ fun MasakinTopBar(viewModel: BudgetViewModel) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "MASAKIN by Revanevan",
+                text = "MASAKIN by Revan",
                 fontWeight = FontWeight.Black,
                 fontSize = 18.sp,
                 color = NeoBlack,

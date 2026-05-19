@@ -39,10 +39,10 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ChefairevanTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false, // Force light mode for crisp high-contrast Neo-Brutalist theme
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = LightColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
