@@ -545,7 +545,7 @@ fun RecipeItemCard(
                     onClick = onExportPdf,
                     backgroundColor = NeoPrimary,
                     contentColor = Color.White,
-                    modifier = Modifier.width(75.dp),
+                    modifier = Modifier.width(80.dp),
                     borderRadius = 8.dp
                 )
             }

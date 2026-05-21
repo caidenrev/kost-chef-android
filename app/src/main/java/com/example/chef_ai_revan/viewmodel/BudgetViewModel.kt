@@ -8,6 +8,7 @@ import com.example.chef_ai_revan.data.repository.BudgetRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.util.Log
 
 data class GeneratedRecipeMock(
     val name: String,
@@ -166,37 +167,84 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
         syncEmail.value = null
     }
 
-    // AI Generation Engine Simulator
+
+    fun getAiRecommendationFromVercel(currentBudget: Double, ingredients: String) {
+        viewModelScope.launch {
+            try {
+                val response = com.example.chef_ai_revan.data.api.RetrofitClient.instance.getRecommendation(
+                    com.example.chef_ai_revan.data.api.RecipeRequest(currentBudget, ingredients)
+                )
+
+                Log.d("CHEF_AI", "Resep dari Vercel: \${response.name}")
+            } catch (e: Exception) {
+                Log.e("CHEF_AI", "Gagal panggil Vercel: \${e.message}")
+            }
+        }
+    }
+
+
+    // AI Generation Engine using real Vercel Serverless Backend + Offline Fallback
     fun generateRecipesWithAI(selectedIngredients: List<String>, budgetLimit: Double) {
         viewModelScope.launch {
             isGenerating.value = true
             generatedRecipes.value = emptyList()
             
-            generationProgress.value = "Connecting to Google Gemini 1.5 Flash..."
-            delay(800)
-            generationProgress.value = "Analyzing selected ingredients: ${selectedIngredients.joinToString(", ")}..."
-            delay(800)
-            generationProgress.value = "Calculating budget-friendly warung local pricing..."
-            delay(800)
-            generationProgress.value = "Structuring optimal recipe plans under Rp ${budgetLimit.toInt()}..."
-            delay(800)
+            generationProgress.value = "Connecting to Vercel Serverless..."
+            delay(500)
+            val ingredientsStr = if (selectedIngredients.isEmpty()) "Bahan apa saja" else selectedIngredients.joinToString(", ")
+            generationProgress.value = "Sending request to Google Gemini AI..."
+            delay(500)
+            
+            try {
+                // Call real live Vercel Serverless Backend
+                val request = com.example.chef_ai_revan.data.api.RecipeRequest(
+                    budget = budgetLimit,
+                    ingredients = ingredientsStr
+                )
+                
+                generationProgress.value = "Receiving budget-friendly recipes..."
+                val response = com.example.chef_ai_revan.data.api.RetrofitClient.instance.getRecommendation(request)
+                
+                val parsedIngredients = if (selectedIngredients.isNotEmpty()) {
+                    selectedIngredients.map { it to (response.cost.toDouble() / selectedIngredients.size) }
+                } else {
+                    listOf("Bahan Rekomendasi AI" to response.cost.toDouble())
+                }
+                
+                val realRecipe = GeneratedRecipeMock(
+                    name = response.name,
+                    estimatedCost = response.cost.toDouble(),
+                    description = "Resep kustom lezat hasil kreasi Chef AI Gemini secara real-time berdasarkan bahan: $ingredientsStr.",
+                    ingredients = parsedIngredients,
+                    instructions = response.steps
+                )
+                
+                generatedRecipes.value = listOf(realRecipe)
+                Log.d("CHEF_AI", "Resep dari Vercel sukses diterima: ${response.name}")
+            } catch (e: Exception) {
+                Log.e("CHEF_AI", "Gagal panggil Vercel, mengaktifkan offline simulator fallback: ${e.message}")
+                
+                generationProgress.value = "Offline Mode: Calculating local pricing..."
+                delay(600)
+                
+                // Fallback to offline high-fidelity simulator
+                val matches = getMockRecipesData().filter { recipe ->
+                    recipe.estimatedCost <= budgetLimit && (selectedIngredients.isEmpty() || selectedIngredients.any { ing ->
+                        recipe.name.contains(ing, ignoreCase = true) || 
+                        recipe.ingredients.any { it.first.contains(ing, ignoreCase = true) }
+                    })
+                }
 
-            val matches = getMockRecipesData().filter { recipe ->
-                recipe.estimatedCost <= budgetLimit && (selectedIngredients.isEmpty() || selectedIngredients.any { ing ->
-                    recipe.name.contains(ing, ignoreCase = true) || 
-                    recipe.ingredients.any { it.first.contains(ing, ignoreCase = true) }
-                })
+                val finalRecipes = if (matches.isNotEmpty()) {
+                    matches
+                } else {
+                    getMockRecipesData().filter { it.estimatedCost <= budgetLimit }
+                }
+
+                generatedRecipes.value = finalRecipes.shuffled().take(3)
+            } finally {
+                isGenerating.value = false
             }
-
-            // Fallback to budget recipes if no strict match
-            val finalRecipes = if (matches.isNotEmpty()) {
-                matches
-            } else {
-                getMockRecipesData().filter { it.estimatedCost <= budgetLimit }
-            }
-
-            generatedRecipes.value = finalRecipes.shuffled().take(3)
-            isGenerating.value = false
         }
     }
 

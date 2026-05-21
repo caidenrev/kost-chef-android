@@ -1,6 +1,7 @@
 package com.example.chef_ai_revan.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -98,7 +99,7 @@ fun NeoButton(
                 enabled = enabled,
                 onClick = onClick
             )
-            .padding(vertical = 12.dp, horizontal = 24.dp),
+            .padding(vertical = 12.dp, horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -146,6 +147,39 @@ fun NeoTextField(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+
+@Composable
+fun NeoShimmerCard(
+    modifier: Modifier = Modifier,
+    height: Dp,
+    borderRadius: Dp = 12.dp
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .neoShadow(
+                color = NeoBlack.copy(alpha = 0.12f),
+                offsetX = 8.dp,
+                offsetY = 8.dp,
+                borderRadius = borderRadius
+            )
+            .background(Color.White.copy(alpha = alpha), RoundedCornerShape(borderRadius))
+            .border(NeoBorderWidth, NeoBlack.copy(alpha = 0.2f), RoundedCornerShape(borderRadius))
+    )
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFFF3F2F8)

@@ -50,19 +50,44 @@ fun BudgetScreen(viewModel: BudgetViewModel) {
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
-    ) {
-        item {
-            Text(
-                text = "RUPIAH BUDGET TRACKER",
-                fontWeight = FontWeight.Black,
-                fontSize = 20.sp,
-                color = NeoBlack
-            )
+    if (budget == null) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
+        ) {
+            item {
+                Text(
+                    text = "RUPIAH BUDGET TRACKER",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 20.sp,
+                    color = NeoBlack
+                )
+            }
+            item {
+                com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 140.dp)
+            }
+            item {
+                com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 160.dp)
+            }
+            item {
+                com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 200.dp)
+            }
         }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
+        ) {
+            item {
+                Text(
+                    text = "RUPIAH BUDGET TRACKER",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 20.sp,
+                    color = NeoBlack
+                )
+            }
 
         // Budget Warning monitor: 80% trigger
         if (isWarning) {
@@ -116,7 +141,7 @@ fun BudgetScreen(viewModel: BudgetViewModel) {
         item {
             NeoCard(
                 modifier = Modifier.fillMaxWidth(),
-                backgroundColor = if (isSurviveMode) NeoPink.copy(alpha = 0.15f) else NeoYellow
+                backgroundColor = NeoYellow
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -300,8 +325,9 @@ fun BudgetScreen(viewModel: BudgetViewModel) {
                             borderRadius = 8.dp
                         )
                     }
-                }
             }
         }
     }
+}
+}
 }
