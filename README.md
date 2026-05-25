@@ -1,134 +1,219 @@
-# MASAKIN by Revan 🍳
+<p align="center">
+  <img src="MASAKIN.png" alt="MASAKIN by Revan" width="320">
+</p>
 
-**MASAKIN by Revan** adalah asisten cerdas berbasis Android Native (Jetpack Compose & Kotlin) yang dirancang khusus untuk mengelola pengeluaran makan harian dan perencanaan resep sehat dengan budget hemat secara efisien. 
-
-Aplikasi ini mengusung antarmuka premium bertema **Neo-Brutalisme** modern dengan warna neon yang mencolok, tombol fisik beranimasi taktil, gaya huruf tebal presisi tinggi (*tracking-tighter*), serta latar belakang polkadot biru muda yang segar.
-
----
-
-## 🌟 Fitur Utama
-
-- **Rekomendasi Resep Harian & AI Generator**: Masukkan bahan belanjaan instan dan limit harga harian Anda, simulator AI Gemini akan mencarikan resep paling optimal lengkap dengan estimasi harga, bahan, dan cara memasak.
-- **Perencanaan Makan Mingguan (7-Day Calendar Planner)**: Jadwalkan rencana makan dari Senin sampai Minggu secara presisi. Setiap makanan yang dijadwalkan akan memotong saldo aktif Anda secara real-time.
-- **Rupiah Budget Tracker & Monitor (Dompet)**: Kelola pengeluaran harian dan bulanan Anda. Aplikasi dilengkapi dengan sistem alarm otomatis ketika pengeluaran menyentuh limit warning **80%** serta **Mode Tanggal Tua** yang aktif otomatis.
-- **Daftar Belanja Checklist Warung**: Checklist interaktif untuk mencatat belanjaan Anda yang terintegrasi langsung dengan input estimasi harga yang simetris.
-- **Ekspor Dokumen Cetak A4 PDF**: Ekspor detail resep masakan Anda atau daftar belanja warung Anda langsung ke dokumen PDF standard cetak A4 yang siap dibagikan atau diprint via Android Share Sheet.
-- **Offline Room Database & Cloud Sync Toggle**: Data tersimpan aman di database lokal SQLite Room secara offline. Tersedia tombol sakelar (chip) Cloud Sync untuk menghubungkan dengan cloud server Firebase secara langsung.
+<h1 align="center">MASAKIN</h1>
+<p align="center"><strong>Makan enak meski akhir bulan</strong></p>
+<p align="center">Aplikasi Android untuk perencanaan masak, budget Rupiah, dan generator resep berbasis AI.</p>
+<p align="center">Dibuat oleh <strong>Revan</strong></p>
 
 ---
 
-## 🎨 Spesifikasi Desain (Neo-Brutalisme Premium)
+## Ringkasan
 
-Aplikasi ini dirancang dengan gaya **Neo-Brutalisme** tingkat tinggi dengan spesifikasi teknis sebagai berikut:
+MASAKIN adalah aplikasi Android native (Kotlin + Jetpack Compose) dengan antarmuka Neo-Brutalism. Data pengguna disimpan **lokal di perangkat** (Room SQLite + DataStore). Fitur AI memakai **Google Gemini API Key** milik pengguna yang dimasukkan lewat tombol Settings di header.
 
-- **Palet Warna Utama**:
-  - `NeoYellow` = `#FFDE4D` (Neon Kuning)
-  - `NeoPink` = `#FF2E93` (Neon Pink)
-  - `NeoGreen` = `#00FF66` (Neon Hijau Kontras)
-  - `NeoCyan` = `#00F0FF` (Neon Cyan)
-  - `NeoPurple` = `#7C3AED` (Neon Ungu)
-  - `NeoBlack` = `#111111` (Batas & Bayangan Solid)
-  - `NeoBackground` = `#EBF3FC` (Latar Belakang Biru Sangat Muda Pastel)
-- **Motif Polka-Dot Canvas**:
-  - Latar belakang digambar dinamis menggunakan Canvas (`drawCircle`) dengan bulatan titik ber-radius **`2.8.dp`**, jarak sebaran titik **`20.dp`**, dan berwarna **Biru Kontras** (`Color(0xFF2E86C1)`) dengan transparansi halus **`15%`**.
-- **Taktil Fisik Animasi Tombol**:
-  - Saat ditekan, tombol akan bergeser turun-kanan secara fisik sejauh `5.dp` sedangkan bayangannya menyusut menjadi `3.dp` (menciptakan ilusi tombol 3D yang benar-benar amblas ke dalam saat disentuh).
-- **Tipografi Presisi Tinggi (Ala Inter Web)**:
-  - Gaya huruf menggunakan SansSerif bawaan Android dengan penyesuaian khusus: Judul utama menggunakan **`FontWeight.Black` (Bobot Tebal 900)** dan **`letterSpacing` negatif (antara `-0.5.sp` hingga `-1.5.sp`)** untuk meniru efek spasi rapat (*tracking-tighter*) modern.
+| Aspek | Keterangan |
+|-------|------------|
+| Platform | Android 7.0+ (API 24) |
+| Bahasa | Kotlin |
+| UI | Jetpack Compose, Material 3 |
+| Database | Room SQLite (offline) |
+| AI | Google Gemini API (key oleh user) |
+| Arsitektur | MVVM + Repository |
 
 ---
 
-## 🛠️ Persyaratan Sistem (Sebelum Kloning)
+## Fitur Utama
 
-Sebelum memindahkan/mengkloning aplikasi ini ke komputer atau perangkat lain, pastikan komputer tujuan memiliki spesifikasi berikut:
-
-1. **Android Studio**: Android Studio Ladybug (2024.2.1) atau versi di atasnya.
-2. **Java Development Kit (JDK)**: **JDK 17** (pilih Gradle JDK Runtime JDK 17 di setingan Android Studio).
-3. **Gradle**: Versi 8.x atau yang lebih baru (Kotlin Gradle DSL `build.gradle.kts`).
-4. **Android SDK**: Compile SDK `36` (atau 34/35) dan Minimum SDK `24` (Android 7.0 Nougat).
-5. **KSP (Kotlin Symbol Processing)**: Sesuai dengan versi Kotlin yang digunakan.
+| Fitur | Deskripsi | Layar |
+|-------|-----------|-------|
+| AI Generator | Generate resep dari bahan terpilih + limit budget (IDR) | Menu |
+| Wishlist | Simpan resep favorit dari hasil AI | Menu |
+| Jadwal Mingguan | Alokasi resep Senin–Minggu, potong saldo otomatis | Jadwal |
+| Dompet | Set limit budget, catat pengeluaran, peringatan saldo rendah | Dompet |
+| Daftar Belanja | Checklist belanja warung + estimasi harga | Belanja |
+| Ekspor PDF | Export resep / daftar belanja ke PDF A4 | Menu, Belanja |
+| NeoToast | Notifikasi aksi (tambah, hapus, simpan) gaya neo-brutalist | Global |
+| Onboarding API Key | Popup pertama kali buka app mengarah ke Settings | Global |
 
 ---
 
-## 🚀 Panduan Kloning & Jalankan di Komputer Lain
+## Navigasi Aplikasi
 
-Ikuti langkah-langkah berikut secara berurutan untuk memindahkan dan menjalankan aplikasi di laptop/perangkat baru:
+| Tab | Route | File UI |
+|-----|-------|---------|
+| MENU | `dashboard` | `DashboardScreen.kt` |
+| JADWAL | `planner` | `PlannerScreen.kt` |
+| DOMPET | `budget` | `BudgetScreen.kt` |
+| BELANJA | `grocery` | `GroceryScreen.kt` |
 
-### Langkah 1: Kloning Repositori
-Jalankan perintah Git clone pada terminal komputer baru Anda:
+Header global: logo MASAKIN + tombol Settings (kuning) untuk API Key.
+
+---
+
+## Tech Stack
+
+| Kategori | Library / Tool | Versi (referensi) |
+|----------|----------------|-------------------|
+| Build | Android Gradle Plugin | 8.7.3 |
+| Language | Kotlin | 2.1.0 |
+| UI | Compose BOM | 2024.11.00 |
+| Navigation | Navigation Compose | 2.8.4 |
+| Database | Room | 2.6.1 |
+| Preferences | DataStore Preferences | 1.1.1 |
+| HTTP | Retrofit + Moshi | 2.11.0 / 1.15.1 |
+| Splash | Core Splashscreen | 1.0.1 |
+| Compile SDK | Android 35 | — |
+| Min SDK | 24 | — |
+| Target SDK | 34 | — |
+
+---
+
+## Palet Warna (Neo-Brutalism)
+
+| Token | Hex | Penggunaan |
+|-------|-----|------------|
+| NeoYellow | `#FFDE4D` | Tab aktif, tombol Settings |
+| NeoPink | `#FF2E93` | Wishlist, toast hapus |
+| NeoGreen | `#00FF66` | Sukses, toast berhasil |
+| NeoCyan | `#00F0FF` | Info, deteksi model |
+| NeoPurple | `#7C3AED` | Banner branding |
+| NeoBlack | `#111111` | Border, shadow, teks |
+| NeoWhite | `#FFFFFF` | Kartu, header |
+| Background | `#EBF3FC` | Latar polka-dot |
+
+---
+
+## Persyaratan Pengembangan
+
+| Komponen | Versi disarankan |
+|----------|------------------|
+| Android Studio | Ladybug (2024.2.1) atau lebih baru |
+| JDK | 17 atau 21 (Gradle JVM) |
+| Android SDK | API 35 (compile) |
+| Git | Opsional |
+
+---
+
+## Instalasi dan Menjalankan
+
+### 1. Clone proyek
+
 ```bash
-git clone https://github.com/username-anda/chefairevan.git
+git clone <url-repository-anda> chefairevan
+cd chefairevan
 ```
-*(Atau salin seluruh direktori proyek `chefairevan` ke flashdisk lalu pindahkan ke komputer baru).*
 
-### Langkah 2: Konfigurasi Environment & local.properties
-Di direktori utama (root) proyek, buat file bernama **`local.properties`** jika belum ada. Isi dengan direktori path Android SDK komputer baru Anda:
+### 2. `local.properties`
 
-**Contoh isi `local.properties` (Windows):**
+Buat file `local.properties` di root proyek:
+
 ```properties
-sdk.dir=C\:\\Users\\NamaUserKomputerBaru\\AppData\\Local\\Android\\Sdk
-```
-**Contoh isi `local.properties` (macOS/Linux):**
-```properties
-sdk.dir=/Users/NamaUserKomputerBaru/Library/Android/sdk
+sdk.dir=C\:\\Users\\NamaUser\\AppData\\Local\\Android\\Sdk
 ```
 
-### Langkah 3: Setup File Lingkungan (.env)
-1. Lihat file template **`.env.example`** di direktori utama.
-2. Buat file baru bernama **`.env`** (atau salin dari `.env.example`).
-3. Masukkan API Key Google Gemini Anda dan konfigurasi Firebase Project ID milik Anda:
-   ```env
-   GEMINI_API_KEY=AIzaSyYourRealGeminiKeyHere
-   FIRESTORE_PROJECT_ID=masakin-by-revan
-   FIRESTORE_API_KEY=FirebaseWebApiKeyHere
-   ```
-4. Di Android Studio, variabel ini akan dibaca secara otomatis atau disimulasikan secara aman tanpa merusak struktur offline database.
+### 3. Sync Gradle
 
-### Langkah 4: Buka Proyek di Android Studio
-1. Jalankan **Android Studio**.
-2. Pilih **File -> Open** lalu pilih folder direktori proyek **`chefairevan`**.
-3. Tunggu hingga proses **Gradle Sync** selesai (pastikan komputer terhubung ke internet saat sync pertama kali untuk mengunduh dependencies libraries).
+Buka folder di Android Studio, lalu **File > Sync Project with Gradle Files**.
 
-### Langkah 5: Jalankan & Build Aplikasi
-Anda dapat langsung menjalankan aplikasi ke emulator atau HP Android fisik:
-1. Hubungkan HP Android asli Anda dengan mengaktifkan mode *USB Debugging*.
-2. Klik tombol **Run (Segitiga Hijau)** di pojok kanan atas Android Studio.
-3. Atau jalankan perintah kompilasi manual lewat terminal Android Studio:
-   - **Windows PowerShell**:
-     ```powershell
-     .\gradlew.bat assembleDebug
-     ```
-   - **macOS / Linux Terminal**:
-     ```bash
-     ./gradlew assembleDebug
-     ```
-4. File APK hasil build akan berlokasi di: `app/build/outputs/apk/debug/app-debug.apk`.
+### 4. Jalankan di emulator / perangkat
+
+```powershell
+# Windows
+.\gradlew.bat installDebug
+```
+
+```bash
+# macOS / Linux
+./gradlew installDebug
+```
+
+### 5. API Key Gemini (wajib untuk AI)
+
+1. Dapatkan key di [Google AI Studio](https://aistudio.google.com/)
+2. Buka app > tombol **Settings** (ikon gerigi kuning di header)
+3. Masukkan API Key > **SIMPAN**
+
+Pada instalasi pertama, popup selamat datang akan mengarahkan ke langkah ini.
 
 ---
 
-## 📦 Arsitektur Kode & Database Schema
+## Build Release (Play Store)
 
-Aplikasi ini menggunakan pola arsitektur **MVVM (Model-View-ViewModel)** dengan komponen utama:
-- **`com.example.chef_ai_revan.data.entity`**:
-  - `Budget`: Menyimpan limit mingguan dan sisa saldo aktif.
-  - `FavoriteRecipe`: Menyimpan data resep masakan favorit (Wishlist).
-  - `WeeklyPlan`: Menyimpan alokasi jadwal makan harian (Senin - Minggu).
-  - `GroceryItem`: Menyimpan daftar belanjaan warung offline.
-- **`com.example.chef_ai_revan.data.dao`**: Interface SQLite query Room Database.
-- **`com.example.chef_ai_revan.viewmodel.BudgetViewModel`**: Penampung status state reaktif (StateFlow) dan jembatan logika UI ke repositori database.
-- **`com.example.chef_ai_revan.ui.components.PdfExporter`**: Canvas Exporter yang menggambar file PDF secara programatik berukuran A4 dan mengirimkannya via FileProvider.
+| Langkah | Perintah / File |
+|---------|-----------------|
+| Keystore | `masakin-release.jks` (buat dengan `keytool`) |
+| Konfigurasi | `keystore.properties` (jangan di-commit) |
+| Bundle AAB | `.\gradlew.bat bundleRelease` |
+| Output | `app/build/outputs/bundle/release/app-release.aab` |
 
----
-
-## 🔧 Pemecahan Masalah (Troubleshooting)
-
-- **Masalah KSP / Gradle Version Mismatch**:
-  Jika Anda mengganti versi Kotlin di proyek, pastikan Anda juga memperbarui versi plugin `google.devtools.ksp` di `gradle/libs.versions.toml` agar versinya cocok dengan Kotlin compiler.
-- **Error Sharing PDF (FileProvider Exception)**:
-  Aplikasi menggunakan FileProvider untuk membagikan PDF. Pastikan setingan XML path di `app/src/main/res/xml/file_paths.xml` dan deklarasi `<provider>` di `AndroidManifest.xml` tidak diubah demi keamanan akses storage.
-- **Room Database Migration Error**:
-  Saat pengembangan, jika Anda mengubah properti tabel di entities, aplikasi dikonfigurasi menggunakan `.fallbackToDestructiveMigration()` sehingga database lokal akan di-reset otomatis tanpa memicu crash skema di HP baru.
+Detail lengkap: [docs/PLAYSTORE.md](docs/PLAYSTORE.md)
 
 ---
 
-Dibuat dengan ❤️ oleh **MASAKIN by Revan** - Asisten Masak & Saldo Anti Tanggal Tua!
+## Struktur Proyek
+
+```
+chefairevan/
+├── MASAKIN.png              # Logo resmi
+├── app/
+│   └── src/main/
+│       ├── java/.../chef_ai_revan/
+│       │   ├── data/        # Room, DAO, Repository, API
+│       │   ├── viewmodel/   # BudgetViewModel
+│       │   ├── ui/
+│       │   │   ├── screens/     # Dashboard, Planner, Budget, Grocery
+│       │   │   ├── components/  # NeoToast, dialogs, PDF, logo
+│       │   │   ├── navigation/
+│       │   │   └── theme/
+│       │   └── MainActivity.kt
+│       └── res/
+├── docs/                    # Dokumentasi tambahan
+├── gradle/
+└── README.md
+```
+
+---
+
+## Dokumentasi Lanjutan
+
+| Dokumen | Isi |
+|---------|-----|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arsitektur MVVM, alur data, komponen UI |
+| [docs/DATABASE.md](docs/DATABASE.md) | Skema Room, tabel, DataStore |
+| [docs/SETUP.md](docs/SETUP.md) | Setup dev, signing, troubleshooting |
+| [docs/API.md](docs/API.md) | Integrasi Gemini API dan fallback cloud |
+| [docs/PLAYSTORE.md](docs/PLAYSTORE.md) | Checklist publikasi Play Store |
+
+---
+
+## Privasi dan Data
+
+| Data | Lokasi | Dikirim ke internet? |
+|------|--------|----------------------|
+| Budget, jadwal, belanja, wishlist | SQLite di perangkat | Tidak |
+| Gemini API Key | DataStore lokal | Ya (hanya ke Google saat generate resep) |
+| Prompt resep | — | Ya (ke Gemini API) |
+
+Tidak ada sinkronisasi cloud akun. Uninstall app = data ikut terhapus.
+
+---
+
+## Troubleshooting
+
+| Masalah | Solusi |
+|---------|--------|
+| Gradle sync gagal | Cek `local.properties`, JDK, koneksi internet |
+| AI tidak jalan | Isi API Key di Settings; cek kuota Gemini |
+| Password keystore salah | Verifikasi dengan `keytool -list -keystore masakin-release.jks` |
+| Tombol Run abu-abu | Sync Gradle; Run Configuration modul `app` |
+| Database reset | Normal saat dev (`fallbackToDestructiveMigration`) |
+
+---
+
+## Lisensi dan Kredit
+
+Proyek ini dikembangkan oleh **Revan** sebagai **MASAKIN**.
+
+Untuk pertanyaan teknis, lihat folder [docs/](docs/) atau buka issue di repository.
