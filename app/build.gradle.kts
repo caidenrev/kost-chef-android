@@ -23,8 +23,8 @@ android {
         applicationId = "com.example.chef_ai_revan"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,6 +68,13 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    packaging {
+        jniLibs {
+            // Native lib terkompresi di APK — lebih kompatibel saat sideload (hindari "App not installed")
+            useLegacyPackaging = true
+        }
     }
 }
 

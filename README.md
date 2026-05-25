@@ -8,7 +8,7 @@
 <p align="center">Dibuat oleh <strong>Revan</strong></p>
 
 <p align="center">
-  <a href="https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.1.apk"><strong>Unduh APK (v1.1)</strong></a>
+  <a href="https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.2.apk"><strong>Unduh APK (v1.2)</strong></a>
   &nbsp;|&nbsp;
   <a href="https://github.com/caidenrev/kost-chef-android/releases">Semua Rilis</a>
 </p>
@@ -21,17 +21,18 @@ Instal langsung di HP Android tanpa Play Store (APK **release signed**, siap pas
 
 | | |
 |---|---|
-| **Versi** | 1.1 (`versionCode` 2) |
+| **Versi** | 1.2 (`versionCode` 3) |
 | **Ukuran** | ~16–22 MB |
 | **Min. Android** | 7.0 (API 24) |
 | **Package** | `com.example.chef_ai_revan` |
-| **Unduh langsung** | [MASAKIN-v1.1.apk](https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.1.apk) |
+| **Unduh langsung** | [MASAKIN-v1.2.apk](https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.2.apk) |
 | **Halaman rilis** | [GitHub Releases](https://github.com/caidenrev/kost-chef-android/releases) |
 
 ### Cara instal di HP
 
-1. Jika **sudah punya MASAKIN v1.0** dari APK GitHub ini: unduh `MASAKIN-v1.1.apk` lalu tap **Update** / **Install** — data tetap, **tidak perlu uninstall**.
-2. Jika **belum pernah** pasang, atau instal dari Android Studio dengan build **debug lama** (signature beda): uninstall sekali, lalu instal `MASAKIN-v1.1.apk`.
+1. Jika **sudah punya MASAKIN** dari APK GitHub (v1.0/v1.1): unduh `MASAKIN-v1.2.apk` lalu **Update** — data tetap.
+2. Jika muncul **"App not installed"**: uninstall MASAKIN sekali (Settings > Apps), lalu instal `MASAKIN-v1.2.apk` lagi.
+3. Jika pernah pasang dari **Android Studio Run** (debug lama, signature beda): wajib uninstall dulu.
 3. Unduh APK sampai selesai (cek ukuran ~16–22 MB, bukan ~1 KB).
 4. Buka file dari **Files** atau **Downloads** (bukan hanya preview di browser).
 5. Aktifkan **Install unknown apps** / **Sumber tidak dikenal** untuk app yang dipakai buka APK.
@@ -49,7 +50,7 @@ Instal langsung di HP Android tanpa Play Store (APK **release signed**, siap pas
 | Play Protect memblokir | Tap **More details** > **Install anyway** |
 | Parse error | File corrupt — unduh ulang, jangan kirim lewat WhatsApp (compress) |
 
-> Build ulang APK release: `.\gradlew.bat assembleRelease` lalu salin ke `releases/MASAKIN-v1.1.apk`
+> Build ulang APK release: `.\gradlew.bat assembleRelease` lalu salin ke `releases/MASAKIN-v1.2.apk`
 
 ---
 
