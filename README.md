@@ -17,25 +17,37 @@
 
 ## Unduh APK
 
-Instal langsung di HP Android tanpa Play Store (versi debug untuk percobaan).
+Instal langsung di HP Android tanpa Play Store (APK **release signed**, siap pasang).
 
 | | |
 |---|---|
 | **Versi** | 1.0 (`versionCode` 1) |
-| **Ukuran** | ~22 MB |
+| **Ukuran** | ~16–22 MB |
 | **Min. Android** | 7.0 (API 24) |
+| **Package** | `com.example.chef_ai_revan` |
 | **Unduh langsung** | [MASAKIN-v1.0.apk](https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.0.apk) |
 | **Halaman rilis** | [GitHub Releases](https://github.com/caidenrev/kost-chef-android/releases) |
 
 ### Cara instal di HP
 
-1. Unduh file `MASAKIN-v1.0.apk` ke ponsel.
-2. Buka file APK (Files / Downloads).
-3. Jika diminta, aktifkan **Install dari sumber tidak dikenal** untuk browser atau file manager yang dipakai.
-4. Tap **Install**.
-5. Buka MASAKIN, masukkan **Gemini API Key** lewat tombol Settings (ikon gerigi kuning di header).
+1. **Hapus dulu** app MASAKIN lama jika pernah terpasang (Settings > Apps > MASAKIN > Uninstall). Wajib jika sebelumnya install dari Android Studio / APK lain.
+2. Unduh `MASAKIN-v1.0.apk` sampai selesai (cek ukuran file, jangan ~1 KB — itu berarti unduhan gagal).
+3. Buka file dari **Files** atau **Downloads** (bukan hanya preview di browser).
+4. Aktifkan **Install unknown apps** / **Sumber tidak dikenal** untuk app yang dipakai buka APK.
+5. Tap **Install**. Jika muncul Play Protect, tap **Install anyway** / **Tetap instal**.
+6. Buka MASAKIN > Settings (ikon kuning) > masukkan Gemini API Key.
 
-> **Catatan:** APK di folder `releases/` adalah build debug untuk distribusi cepat. Untuk Play Store gunakan AAB release yang sudah di-sign.
+### APK tidak mau instal?
+
+| Gejala | Solusi |
+|--------|--------|
+| "App not installed" | Uninstall versi lama dulu; unduh ulang APK |
+| "Package conflicts" | Ada instalasi lama dengan signature beda — uninstall semua versi MASAKIN |
+| File cuma beberapa KB | Link GitHub belum di-push; unduh ulang dari repo yang sudah update |
+| Play Protect memblokir | Tap **More details** > **Install anyway** |
+| Parse error | File corrupt — unduh ulang, jangan kirim lewat WhatsApp (compress) |
+
+> Build ulang APK release: `.\gradlew.bat assembleRelease` lalu salin ke `releases/MASAKIN-v1.0.apk`
 
 ---
 
