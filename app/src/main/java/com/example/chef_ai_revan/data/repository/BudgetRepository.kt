@@ -3,6 +3,7 @@ package com.example.chef_ai_revan.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.chef_ai_revan.data.dao.*
 import com.example.chef_ai_revan.data.entity.*
@@ -22,13 +23,25 @@ class BudgetRepository(
     val weeklyPlan: Flow<List<WeeklyPlan>> = weeklyPlanDao.getWeeklyPlan()
 
     private val USER_API_KEY = stringPreferencesKey("user_gemini_api_key")
+    private val API_KEY_INTRO_SHOWN = booleanPreferencesKey("api_key_intro_shown")
+
     val userApiKey: Flow<String?> = dataStore.data.map { preferences ->
         preferences[USER_API_KEY]
+    }
+
+    val hasSeenApiKeyIntro: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[API_KEY_INTRO_SHOWN] == true
     }
 
     suspend fun saveUserApiKey(key: String) {
         dataStore.edit { preferences ->
             preferences[USER_API_KEY] = key
+        }
+    }
+
+    suspend fun setApiKeyIntroShown() {
+        dataStore.edit { preferences ->
+            preferences[API_KEY_INTRO_SHOWN] = true
         }
     }
 

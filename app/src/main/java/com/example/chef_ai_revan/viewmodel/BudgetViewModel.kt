@@ -50,6 +50,7 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
     val detectedModelInfo = MutableStateFlow<String?>(null)
 
     val showApiSettingsDialog = MutableStateFlow(false)
+    val showApiKeyWelcomeDialog = MutableStateFlow(false)
 
     // Survive Mode & Warnings
     val isSurviveMode: StateFlow<Boolean> = budget.map { b ->
@@ -69,13 +70,29 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
                 val days = listOf("SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU", "MINGGU")
                 repository.initializeWeeklyPlans(days.mapIndexed { i, d -> WeeklyPlan(dayIndex = i, dayName = d) })
             }
+            val introSeen = repository.hasSeenApiKeyIntro.first()
+            val apiKey = repository.userApiKey.first()
+            if (!introSeen && apiKey.isNullOrBlank()) {
+                showApiKeyWelcomeDialog.value = true
+            }
         }
     }
 
     fun saveApiKey(key: String) {
         viewModelScope.launch {
             repository.saveUserApiKey(key)
-            if (key.isNotBlank()) detectAvailableModels(key)
+            if (key.isNotBlank()) {
+                repository.setApiKeyIntroShown()
+                detectAvailableModels(key)
+            }
+        }
+    }
+
+    fun dismissApiKeyWelcome(openSettings: Boolean) {
+        viewModelScope.launch {
+            repository.setApiKeyIntroShown()
+            showApiKeyWelcomeDialog.value = false
+            if (openSettings) showApiSettingsDialog.value = true
         }
     }
 

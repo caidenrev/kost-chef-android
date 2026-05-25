@@ -44,6 +44,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.chef_ai_revan.ui.components.ApiKeySettingsDialog
+import com.example.chef_ai_revan.ui.components.ApiKeyWelcomeDialog
 import com.example.chef_ai_revan.ui.components.MasakinLogo
 import com.example.chef_ai_revan.ui.components.MasakinSplashScreen
 import com.example.chef_ai_revan.ui.components.NeoToastHost
@@ -131,6 +132,13 @@ class MainActivity : ComponentActivity() {
                                 end = 16.dp
                             )
                         )
+                        val showApiWelcome by budgetViewModel.showApiKeyWelcomeDialog.collectAsStateWithLifecycle()
+                        if (showApiWelcome) {
+                            ApiKeyWelcomeDialog(
+                                onOpenSettings = { budgetViewModel.dismissApiKeyWelcome(openSettings = true) },
+                                onDismiss = { budgetViewModel.dismissApiKeyWelcome(openSettings = false) }
+                            )
+                        }
                         val showApiSettings by budgetViewModel.showApiSettingsDialog.collectAsStateWithLifecycle()
                         if (showApiSettings) {
                             ApiKeySettingsDialog(
