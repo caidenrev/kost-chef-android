@@ -1,6 +1,5 @@
 package com.example.chef_ai_revan.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -67,7 +66,7 @@ fun GroceryScreen(viewModel: BudgetViewModel) {
                             "$checkSymbol ${it.name} (${currencyFormatter.format(it.estimatedCost)})"
                         }
                         PdfExporter.exportGroceryPdf(context, itemsStr)
-                        Toast.makeText(context, "Daftar belanja siap diekspor!", Toast.LENGTH_SHORT).show()
+                        NeoToastState.show("Daftar belanja siap diekspor!", NeoToastType.SUCCESS)
                     },
                     backgroundColor = NeoCyan,
                     modifier = Modifier.fillMaxWidth()
@@ -108,7 +107,7 @@ fun GroceryScreen(viewModel: BudgetViewModel) {
                                     viewModel.addGroceryItem(itemName, itemCost.toDoubleOrNull() ?: 0.0)
                                     itemName = ""
                                     itemCost = ""
-                                    Toast.makeText(context, "Item dimasukkan!", Toast.LENGTH_SHORT).show()
+                                    NeoToastState.show("Item dimasukkan!", NeoToastType.SUCCESS)
                                 }
                             },
                             backgroundColor = NeoGreen,
@@ -148,7 +147,7 @@ fun GroceryScreen(viewModel: BudgetViewModel) {
                         onCheckedChange = { viewModel.toggleGroceryItem(item) },
                         onDelete = {
                             viewModel.deleteGroceryItem(item)
-                            Toast.makeText(context, "Item dihapus dari catatan!", Toast.LENGTH_SHORT).show()
+                            NeoToastState.show("Item dihapus dari catatan!", NeoToastType.DELETE)
                         }
                     )
                 }

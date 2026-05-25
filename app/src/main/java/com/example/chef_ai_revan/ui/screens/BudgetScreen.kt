@@ -1,6 +1,5 @@
 package com.example.chef_ai_revan.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,7 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import com.example.chef_ai_revan.ui.components.NeoToastState
+import com.example.chef_ai_revan.ui.components.NeoToastType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,13 +29,9 @@ import java.util.Locale
 
 @Composable
 fun BudgetScreen(viewModel: BudgetViewModel) {
-    val context = LocalContext.current
     val budget by viewModel.budget.collectAsStateWithLifecycle()
     val isSurviveMode by viewModel.isSurviveMode.collectAsStateWithLifecycle()
     val isWarning by viewModel.isWeeklyBudgetWarning.collectAsStateWithLifecycle()
-
-    val syncEmail by viewModel.syncEmail.collectAsStateWithLifecycle()
-    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
 
     var limitInput by remember { mutableStateOf("") }
     var expenseInput by remember { mutableStateOf("") }
@@ -50,284 +46,194 @@ fun BudgetScreen(viewModel: BudgetViewModel) {
         }
     }
 
-    if (budget == null) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
-        ) {
-            item {
-                Text(
-                    text = "RUPIAH BUDGET TRACKER",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 20.sp,
-                    color = NeoBlack
-                )
-            }
-            item {
-                com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 140.dp)
-            }
-            item {
-                com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 160.dp)
-            }
-            item {
-                com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 200.dp)
-            }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
+    ) {
+        item {
+            Text(
+                text = "RUPIAH BUDGET TRACKER",
+                fontWeight = FontWeight.Black,
+                fontSize = 20.sp,
+                color = NeoBlack
+            )
         }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp)
-        ) {
-            item {
-                Text(
-                    text = "RUPIAH BUDGET TRACKER",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 20.sp,
-                    color = NeoBlack
-                )
-            }
 
-        // Budget Warning monitor: 80% trigger
-        if (isWarning) {
+        if (budget == null) {
+            // Data Kosoh: Tampilkan form inisialisasi agar user bisa input pertama kali
             item {
-                NeoCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = NeoPrimary
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                NeoCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "ALARM PENGELUARAN 80%!",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "SET BUDGET PERTAMA ANDA:",
                             fontWeight = FontWeight.Black,
-                            color = Color.White
+                            fontSize = 14.sp
                         )
-                        Text(
-                            text = "Pengeluaran harian/mingguan Anda sudah mencapai 80% dari batas limit! Dompet kritis, mulailah berhemat ya.",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Mode Tanggal Tua Trigger
-        if (isSurviveMode) {
-            item {
-                NeoCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = NeoPink
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "MODE TANGGAL TUA AKTIF",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Sisa saldo kurang dari Rp 10.000 atau di bawah 15%. AI otomatis memprioritaskan resep paling ekonomis di menu utama.",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Wallet Balance details
-        item {
-            NeoCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = NeoYellow
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "SISA SALDO AKTIF:",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = currencyFormatter.format(budget?.currentBalance ?: 0.0),
-                        style = MaterialTheme.typography.displayMedium,
-                        fontWeight = FontWeight.Black,
-                        color = NeoBlack
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Total Limit Mingguan: ${currencyFormatter.format(budget?.limit ?: 0.0)}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = Color.DarkGray
-                    )
-                }
-            }
-        }
-
-        // Limit setting inputs
-        item {
-            NeoCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "ATUR LIMIT MINGGUAN BARU:",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 14.sp
-                    )
-                    NeoTextField(
-                        value = limitInput,
-                        onValueChange = { limitInput = it },
-                        placeholder = "Contoh: 500000",
-                        modifier = Modifier.fillMaxWidth(),
-                        borderRadius = 8.dp
-                    )
-                    NeoButton(
-                        text = "SET BUDGET MINGGUAN",
-                        onClick = {
-                            limitInput.toDoubleOrNull()?.let {
-                                viewModel.updateBudgetLimit(it)
-                                Toast.makeText(context, "Limit budget mingguan diperbarui!", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        backgroundColor = NeoBlack,
-                        contentColor = Color.White,
-                        modifier = Modifier.fillMaxWidth(),
-                        borderRadius = 8.dp
-                    )
-                }
-            }
-        }
-
-        // Expense tracking inputs
-        item {
-            NeoCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "CATAT PENGELUARAN MANUAL:",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 14.sp
-                    )
-                    NeoTextField(
-                        value = expenseInput,
-                        onValueChange = { expenseInput = it },
-                        placeholder = "Contoh: 15000",
-                        modifier = Modifier.fillMaxWidth(),
-                        borderRadius = 8.dp
-                    )
-                    NeoButton(
-                        text = "POTONG SALDO DOMPET",
-                        onClick = {
-                            expenseInput.toDoubleOrNull()?.let {
-                                viewModel.addExpense(it)
-                                expenseInput = ""
-                                Toast.makeText(context, "Saldo dipotong!", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        backgroundColor = NeoPrimary,
-                        contentColor = Color.White,
-                        modifier = Modifier.fillMaxWidth(),
-                        borderRadius = 8.dp
-                    )
-                }
-            }
-        }
-
-        // Cloud sync section
-        item {
-            val isSynced = syncEmail != null
-            NeoCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = if (isSynced) NeoGreen.copy(alpha = 0.2f) else Color.White
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "CLOUDSYNC & KEAMANAN AKUN",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 14.sp,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = "Simpan riwayat resep favorit, histori belanja, dan data dompet limit mingguan secara aman di cloud Firestore.",
-                        fontSize = 12.sp,
-                        color = Color.DarkGray,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    if (isSyncing) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(NeoWhite, shape = RoundedCornerShape(8.dp))
-                                .border(2.dp, NeoBlack, shape = RoundedCornerShape(8.dp))
-                                .padding(12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(color = NeoPurple, modifier = Modifier.size(20.dp))
-                                Text(
-                                    text = "Menghubungkan Akun Google...",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    } else if (isSynced) {
-                        Column(
+                        NeoTextField(
+                            value = limitInput,
+                            onValueChange = { limitInput = it },
+                            placeholder = "Contoh: 500000",
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(NeoWhite, shape = RoundedCornerShape(8.dp))
-                                    .border(2.dp, NeoBlack, shape = RoundedCornerShape(8.dp))
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .background(NeoGreen, shape = CircleShape)
-                                )
-                                Text(
-                                    text = "Google Sync Aktif: $syncEmail",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                            }
-                            NeoButton(
-                                text = "LOGOUT DARI GOOGLE SYNC",
-                                onClick = {
-                                    viewModel.logoutGoogleSync()
-                                    Toast.makeText(context, "Google Sync Dihentikan!", Toast.LENGTH_SHORT).show()
-                                },
-                                backgroundColor = NeoPink,
-                                modifier = Modifier.fillMaxWidth(),
-                                borderRadius = 8.dp
-                            )
-                        }
-                    } else {
+                            borderRadius = 8.dp
+                        )
                         NeoButton(
-                            text = "LOGIN DENGAN GOOGLE",
+                            text = "MULAI TRACKING",
                             onClick = {
-                                viewModel.triggerGoogleCloudSync()
+                                limitInput.toDoubleOrNull()?.let {
+                                    viewModel.updateBudgetLimit(it)
+                                    NeoToastState.show("Budget diinisialisasi!", NeoToastType.SUCCESS)
+                                }
                             },
-                            backgroundColor = NeoCyan,
+                            backgroundColor = NeoBlack,
+                            contentColor = Color.White,
                             modifier = Modifier.fillMaxWidth(),
                             borderRadius = 8.dp
                         )
                     }
+                }
+            }
+            item { com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 100.dp) }
+            item { com.example.chef_ai_revan.ui.components.NeoShimmerCard(height = 100.dp) }
+        } else {
+            // Data Ada: Tampilkan UI Lengkap
+            if (isWarning) {
+                item {
+                    NeoCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        backgroundColor = NeoPrimary
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "ALARM PENGELUARAN 80%!",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Pengeluaran harian/mingguan Anda sudah mencapai 80% dari batas limit!",
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (isSurviveMode) {
+                item {
+                    NeoCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        backgroundColor = NeoPink
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "MODE TANGGAL TUA AKTIF",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Sisa saldo kritis. AI otomatis memprioritaskan resep paling ekonomis.",
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                NeoCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = NeoYellow
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "SISA SALDO AKTIF:",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = currencyFormatter.format(budget?.currentBalance ?: 0.0),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Black,
+                            color = NeoBlack
+                        )
+                        Text(
+                            text = "Total Limit Mingguan: ${currencyFormatter.format(budget?.limit ?: 0.0)}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+            }
+
+            item {
+                NeoCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "UPDATE LIMIT MINGGUAN:",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp
+                        )
+                        NeoTextField(
+                            value = limitInput,
+                            onValueChange = { limitInput = it },
+                            placeholder = "Contoh: 500000",
+                            modifier = Modifier.fillMaxWidth(),
+                            borderRadius = 8.dp
+                        )
+                        NeoButton(
+                            text = "UPDATE BUDGET",
+                            onClick = {
+                                limitInput.toDoubleOrNull()?.let {
+                                    viewModel.updateBudgetLimit(it)
+                                    NeoToastState.show("Limit diperbarui!", NeoToastType.SUCCESS)
+                                }
+                            },
+                            backgroundColor = NeoBlack,
+                            contentColor = Color.White,
+                            modifier = Modifier.fillMaxWidth(),
+                            borderRadius = 8.dp
+                        )
+                    }
+                }
+            }
+
+            item {
+                NeoCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "CATAT PENGELUARAN MANUAL:",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp
+                        )
+                        NeoTextField(
+                            value = expenseInput,
+                            onValueChange = { expenseInput = it },
+                            placeholder = "Contoh: 15000",
+                            modifier = Modifier.fillMaxWidth(),
+                            borderRadius = 8.dp
+                        )
+                        NeoButton(
+                            text = "POTONG SALDO DOMPET",
+                            onClick = {
+                                expenseInput.toDoubleOrNull()?.let {
+                                    viewModel.addExpense(it)
+                                    expenseInput = ""
+                                    NeoToastState.show("Saldo dipotong!", NeoToastType.WARNING)
+                                }
+                            },
+                            backgroundColor = NeoPrimary,
+                            contentColor = Color.White,
+                            modifier = Modifier.fillMaxWidth(),
+                            borderRadius = 8.dp
+                        )
+                    }
+                }
             }
         }
     }
-}
-}
 }

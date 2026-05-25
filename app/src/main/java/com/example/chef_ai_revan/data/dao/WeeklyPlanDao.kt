@@ -19,12 +19,12 @@ interface WeeklyPlanDao {
     @Update
     suspend fun updateWeeklyPlan(plan: WeeklyPlan)
 
-    @Query("UPDATE weekly_plans SET recipeName = :recipeName, estimatedCost = :cost, description = :description WHERE dayIndex = :dayIndex")
-    suspend fun updateWeeklyPlanForDay(dayIndex: Int, recipeName: String?, cost: Double, description: String?)
+    @Query("UPDATE weekly_plans SET recipeName = :recipeName, estimatedCost = :cost, description = :description, ingredientsList = :ingredientsList, steps = :steps WHERE dayIndex = :dayIndex")
+    suspend fun updateWeeklyPlanForDay(dayIndex: Int, recipeName: String?, cost: Double, description: String?, ingredientsList: String?, steps: String?)
 
-    @Query("UPDATE weekly_plans SET recipeName = NULL, estimatedCost = 0.0, description = NULL WHERE dayIndex = :dayIndex")
+    @Query("UPDATE weekly_plans SET recipeName = NULL, estimatedCost = 0.0, description = NULL, ingredientsList = NULL, steps = NULL WHERE dayIndex = :dayIndex")
     suspend fun clearWeeklyPlanForDay(dayIndex: Int)
 
-    @Query("UPDATE weekly_plans SET recipeName = NULL, estimatedCost = 0.0, description = NULL")
+    @Query("UPDATE weekly_plans SET recipeName = NULL, estimatedCost = 0.0, description = NULL, ingredientsList = NULL, steps = NULL")
     suspend fun clearAllWeeklyPlans()
 }

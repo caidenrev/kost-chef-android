@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
-import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
@@ -158,7 +157,7 @@ object PdfExporter {
             fileOutputStream.close()
         } catch (e: IOException) {
             e.printStackTrace()
-            Toast.makeText(context, "Gagal mengekspor PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+            NeoToastState.show("Gagal mengekspor PDF: ${e.message}", NeoToastType.ERROR)
             pdfDocument.close()
             return
         } finally {

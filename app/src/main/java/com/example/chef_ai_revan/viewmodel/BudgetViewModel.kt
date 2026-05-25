@@ -9,13 +9,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.example.chef_ai_revan.data.api.*
+import org.json.JSONObject
 
 data class GeneratedRecipeMock(
     val name: String,
     val estimatedCost: Double,
     val description: String,
-    val ingredients: List<Pair<String, Double>>,
-    val instructions: String
+    val ingredients: List<Pair<String, Double>>,  // nama bahan to estimasi harga
+    val steps: List<String>                        // langkah-langkah sebagai list
 )
 
 class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
@@ -33,271 +35,331 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
     val weeklyPlan: StateFlow<List<WeeklyPlan>> = repository.weeklyPlan
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Cloud Sync States
-    val isSyncing = MutableStateFlow(false)
-    val syncEmail = MutableStateFlow<String?>(null)
+    // API Key State
+    val userApiKey: StateFlow<String?> = repository.userApiKey
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // AI Generation States
+    // AI States
     val isGenerating = MutableStateFlow(false)
     val generationProgress = MutableStateFlow("")
     val generatedRecipes = MutableStateFlow<List<GeneratedRecipeMock>>(emptyList())
 
-    // Survive Mode: Balance < Rp 10.000 or < 15% of Limit
+    // Model yang tersedia untuk key ini (diisi saat saveApiKey)
+    val availableModels = MutableStateFlow<List<String>>(emptyList())
+    val isDetectingModels = MutableStateFlow(false)
+    val detectedModelInfo = MutableStateFlow<String?>(null)
+
+    val showApiSettingsDialog = MutableStateFlow(false)
+
+    // Survive Mode & Warnings
     val isSurviveMode: StateFlow<Boolean> = budget.map { b ->
         if (b == null || b.limit == 0.0) false
         else (b.currentBalance / b.limit) < 0.15 || b.currentBalance < 10000.0
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    // Budget Monitor Alert: spending exceeds 80% (i.e. remaining balance <= 20% of limit)
     val isWeeklyBudgetWarning: StateFlow<Boolean> = budget.map { b ->
         if (b == null || b.limit == 0.0) false
         else (b.currentBalance / b.limit) <= 0.20
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
-        // Pre-populate 7-day plan if Room holds no entries
         viewModelScope.launch {
-            val currentPlans = repository.weeklyPlan.first()
-            if (currentPlans.isEmpty()) {
+            if (repository.budget.first() == null) repository.updateBudget(0.0, 0.0)
+            if (repository.weeklyPlan.first().isEmpty()) {
                 val days = listOf("SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU", "MINGGU")
-                val initialPlans = days.mapIndexed { idx, day ->
-                    WeeklyPlan(dayIndex = idx, dayName = day)
-                }
-                repository.initializeWeeklyPlans(initialPlans)
+                repository.initializeWeeklyPlans(days.mapIndexed { i, d -> WeeklyPlan(dayIndex = i, dayName = d) })
             }
         }
     }
 
-    // Budget Operations
-    fun updateBudgetLimit(limit: Double) {
+    fun saveApiKey(key: String) {
         viewModelScope.launch {
-            val current = budget.value
-            repository.updateBudget(limit, current?.currentBalance ?: limit)
+            repository.saveUserApiKey(key)
+            if (key.isNotBlank()) detectAvailableModels(key)
         }
     }
 
-    fun addExpense(amount: Double) {
+    fun detectAvailableModels(apiKey: String) {
         viewModelScope.launch {
-            val current = budget.value
-            if (current != null) {
-                repository.updateBalance(current.currentBalance - amount)
+            isDetectingModels.value = true
+            detectedModelInfo.value = "Mendeteksi model yang tersedia..."
+            try {
+                val response = GeminiClient.instance.listModels(apiKey)
+                val models = response.models
+                    ?.filter { model ->
+                        // hanya model yang support generateContent
+                        model.supportedMethods?.contains("generateContent") == true &&
+                        // hanya model gemini (bukan embedding, dll)
+                        model.name.contains("gemini", ignoreCase = true)
+                    }
+                    ?.map { it.name.removePrefix("models/") } // "models/gemini-1.5-flash" → "gemini-1.5-flash"
+                    ?: emptyList()
+
+                // Urutkan sesuai preferensi
+                val sorted = GeminiClient.PREFERRED_MODELS.filter { it in models } +
+                    models.filter { it !in GeminiClient.PREFERRED_MODELS }
+
+                availableModels.value = sorted
+                detectedModelInfo.value = if (sorted.isEmpty())
+                    "Tidak ada model yang tersedia untuk key ini."
+                else
+                    "Model tersedia: ${sorted.take(3).joinToString(", ")}${if (sorted.size > 3) " +${sorted.size - 3} lainnya" else ""}"
+
+                Log.d("CHEF_AI", "Model tersedia: $sorted")
+            } catch (e: Exception) {
+                Log.e("CHEF_AI", "ListModels gagal: ${e.message}")
+                detectedModelInfo.value = "Gagal deteksi model: ${e.message?.take(60)}"
+                availableModels.value = emptyList()
+            } finally {
+                isDetectingModels.value = false
             }
         }
     }
+    fun updateBudgetLimit(limit: Double) { viewModelScope.launch { repository.updateBudget(limit, budget.value?.currentBalance ?: limit) } }
+    fun addExpense(amount: Double) { viewModelScope.launch { budget.value?.let { repository.updateBalance(it.currentBalance - amount) } } }
+    fun addGroceryItem(name: String, cost: Double) { viewModelScope.launch { repository.addGroceryItem(name, cost) } }
+    fun toggleGroceryItem(item: GroceryItem) { viewModelScope.launch { repository.toggleGroceryItem(item) } }
+    fun deleteGroceryItem(item: GroceryItem) { viewModelScope.launch { repository.deleteGroceryItem(item) } }
 
-    // Grocery Operations
-    fun addGroceryItem(name: String, cost: Double) {
-        viewModelScope.launch {
-            repository.addGroceryItem(name, cost)
-        }
-    }
-
-    fun toggleGroceryItem(item: GroceryItem) {
-        viewModelScope.launch {
-            repository.toggleGroceryItem(item)
-        }
-    }
-
-    fun deleteGroceryItem(item: GroceryItem) {
-        viewModelScope.launch {
-            repository.deleteGroceryItem(item)
-        }
-    }
-
-    // Favorites Operations
     fun addRecipeToFavorites(recipe: GeneratedRecipeMock) {
         viewModelScope.launch {
             val ingredientsStr = recipe.ingredients.joinToString(",") { "${it.first}:${it.second}" }
             repository.addFavoriteRecipe(recipe.name, recipe.estimatedCost, recipe.description, ingredientsStr)
         }
-    }
+    }    fun removeFavorite(recipe: FavoriteRecipe) { viewModelScope.launch { repository.removeFavoriteRecipe(recipe) } }
+    fun removeRecipeFromFavoritesByName(name: String) { viewModelScope.launch { repository.removeFavoriteRecipeByName(name) } }
 
-    fun removeRecipeFromFavoritesByName(name: String) {
+    // Weekly Plan Ops with Balance Restoration
+    fun addRecipeToWeeklyPlan(dayIndex: Int, recipe: GeneratedRecipeMock) {
         viewModelScope.launch {
-            repository.removeFavoriteRecipeByName(name)
-        }
-    }
-
-    fun removeFavorite(recipe: FavoriteRecipe) {
-        viewModelScope.launch {
-            repository.removeFavoriteRecipe(recipe)
-        }
-    }
-
-    // Weekly Planner Operations
-    fun addRecipeToWeeklyPlan(dayIndex: Int, recipeName: String, cost: Double, description: String) {
-        viewModelScope.launch {
-            repository.updateWeeklyPlanForDay(dayIndex, recipeName, cost, description)
-            // Automatically deduct planned meal cost from main wallet balance!
-            val current = budget.value
-            if (current != null) {
-                repository.updateBalance(current.currentBalance - cost)
-            }
+            val ingredientsStr = recipe.ingredients.joinToString("||") { "${it.first}:${it.second}" }
+            val stepsStr = recipe.steps.joinToString("||")
+            repository.updateWeeklyPlanForDay(
+                dayIndex = dayIndex,
+                recipeName = recipe.name,
+                cost = recipe.estimatedCost,
+                description = recipe.description,
+                ingredientsList = ingredientsStr,
+                steps = stepsStr
+            )
+            budget.value?.let { repository.updateBalance(it.currentBalance - recipe.estimatedCost) }
         }
     }
 
     fun clearWeeklyPlanForDay(dayIndex: Int, costToRestore: Double) {
         viewModelScope.launch {
             repository.clearWeeklyPlanForDay(dayIndex)
-            // Restore wallet balance when clearing a planned dish!
-            val current = budget.value
-            if (current != null) {
-                repository.updateBalance(current.currentBalance + costToRestore)
-            }
+            budget.value?.let { repository.updateBalance(it.currentBalance + costToRestore) }
         }
     }
 
     fun clearAllWeeklyPlans() {
         viewModelScope.launch {
+            val currentPlans = repository.weeklyPlan.first()
+            val totalCostToRestore = currentPlans.sumOf { it.estimatedCost }
             repository.clearAllWeeklyPlans()
+            budget.value?.let { repository.updateBalance(it.currentBalance + totalCostToRestore) }
         }
     }
 
-    // Cloud Sync Google Simulation
-    fun triggerGoogleCloudSync() {
-        viewModelScope.launch {
-            isSyncing.value = true
-            delay(1500)
-            syncEmail.value = "anak_kos_gemilang@gmail.com"
-            isSyncing.value = false
-        }
-    }
-
-    fun logoutGoogleSync() {
-        syncEmail.value = null
-    }
-
-
-    fun getAiRecommendationFromVercel(currentBudget: Double, ingredients: String) {
-        viewModelScope.launch {
-            try {
-                val response = com.example.chef_ai_revan.data.api.RetrofitClient.instance.getRecommendation(
-                    com.example.chef_ai_revan.data.api.RecipeRequest(currentBudget, ingredients)
-                )
-
-                Log.d("CHEF_AI", "Resep dari Vercel: \${response.name}")
-            } catch (e: Exception) {
-                Log.e("CHEF_AI", "Gagal panggil Vercel: \${e.message}")
-            }
-        }
-    }
-
-
-    // AI Generation Engine using real Vercel Serverless Backend + Offline Fallback
     fun generateRecipesWithAI(selectedIngredients: List<String>, budgetLimit: Double) {
         viewModelScope.launch {
+            val currentKey = userApiKey.value
+            if (currentKey.isNullOrBlank()) {
+                generationProgress.value = "Peringatan: API Key belum diisi. Tekan ikon gir untuk mengisi."
+                isGenerating.value = true; delay(2000); isGenerating.value = false; return@launch
+            }
+
             isGenerating.value = true
             generatedRecipes.value = emptyList()
-            
-            generationProgress.value = "Connecting to Vercel Serverless..."
-            delay(500)
-            val ingredientsStr = if (selectedIngredients.isEmpty()) "Bahan apa saja" else selectedIngredients.joinToString(", ")
-            generationProgress.value = "Sending request to Google Gemini AI..."
-            delay(500)
-            
+            val ingredientsStr = if (selectedIngredients.isEmpty()) "Bahan hemat anak kos" else selectedIngredients.joinToString(", ")
+            val prompt = createPrompt(budgetLimit, ingredientsStr)
+            val requestBody = GeminiRequest(
+                contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                generationConfig = GeminiGenerationConfig(
+                    temperature = 0.7f,
+                    responseMimeType = "application/json"
+                )
+            )
+
+            // Pakai model yang sudah terdeteksi, atau fallback ke daftar default
+            val modelsToTry = availableModels.value.ifEmpty { GeminiClient.PREFERRED_MODELS }
+            var lastError: Exception? = null
+
+            for (model in modelsToTry) {
+                try {
+                    generationProgress.value = "Sedang meracik resep untukmu..."
+                    val url = GeminiClient.buildGenerateUrl(model, currentKey)
+                    Log.d("CHEF_AI", "POST ke: ${url.replace(currentKey, "***")} (model: $model)")
+
+                    val response = GeminiClient.instance.generateContent(
+                        url = url,
+                        request = requestBody
+                    )
+
+                    val responseText = response.candidates
+                        ?.firstOrNull()
+                        ?.content
+                        ?.parts
+                        ?.firstOrNull()
+                        ?.text
+                        ?: throw Exception("Respons AI kosong dari $model")
+
+                    Log.d("CHEF_AI", "Respons $model: $responseText")
+                    processResponse(responseText, selectedIngredients)
+                    generationProgress.value = "Resep siap! Selamat makan 🍽️"
+                    isGenerating.value = false
+                    return@launch
+
+                } catch (e: Exception) {
+                    Log.e("CHEF_AI", "$model Gagal: ${e.javaClass.simpleName} - ${e.message}")
+                    lastError = e
+                }
+            }
+
+            // Semua model Gemini gagal, coba Vercel Cloud
             try {
-                // Call real live Vercel Serverless Backend
-                val request = com.example.chef_ai_revan.data.api.RecipeRequest(
-                    budget = budgetLimit,
-                    ingredients = ingredientsStr
+                generationProgress.value = "Menghubungi Cloud Chef Revan..."
+                Log.d("CHEF_AI", "Mencoba Vercel cloud...")
+                val cloudResponse = RetrofitClient.instance.getRecommendation(
+                    RecipeRequest(budget = budgetLimit, ingredients = ingredientsStr, userKey = currentKey)
                 )
-                
-                generationProgress.value = "Receiving budget-friendly recipes..."
-                val response = com.example.chef_ai_revan.data.api.RetrofitClient.instance.getRecommendation(request)
-                
-                val parsedIngredients = if (selectedIngredients.isNotEmpty()) {
-                    selectedIngredients.map { it to (response.cost.toDouble() / selectedIngredients.size) }
-                } else {
-                    listOf("Bahan Rekomendasi AI" to response.cost.toDouble())
-                }
-                
-                val realRecipe = GeneratedRecipeMock(
-                    name = response.name,
-                    estimatedCost = response.cost.toDouble(),
-                    description = "Resep kustom lezat hasil kreasi Chef AI Gemini secara real-time berdasarkan bahan: $ingredientsStr.",
-                    ingredients = parsedIngredients,
-                    instructions = response.steps
+                generatedRecipes.value = listOf(
+                    GeneratedRecipeMock(
+                        name = cloudResponse.name,
+                        estimatedCost = cloudResponse.cost,
+                        description = "Resep dari Chef Revan Cloud.",
+                        ingredients = listOf("Bahan sesuai resep" to cloudResponse.cost),
+                        steps = cloudResponse.steps
+                            .split(Regex("(?=\\d+\\.)"))
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() }
+                            .ifEmpty { listOf(cloudResponse.steps) }
+                    )
                 )
-                
-                generatedRecipes.value = listOf(realRecipe)
-                Log.d("CHEF_AI", "Resep dari Vercel sukses diterima: ${response.name}")
-            } catch (e: Exception) {
-                Log.e("CHEF_AI", "Gagal panggil Vercel, mengaktifkan offline simulator fallback: ${e.message}")
-                
-                generationProgress.value = "Offline Mode: Calculating local pricing..."
-                delay(600)
-                
-                // Fallback to offline high-fidelity simulator
-                val matches = getMockRecipesData().filter { recipe ->
-                    recipe.estimatedCost <= budgetLimit && (selectedIngredients.isEmpty() || selectedIngredients.any { ing ->
-                        recipe.name.contains(ing, ignoreCase = true) || 
-                        recipe.ingredients.any { it.first.contains(ing, ignoreCase = true) }
-                    })
-                }
+                generationProgress.value = "Resep siap dari Cloud! Selamat makan 🍽️"
 
-                val finalRecipes = if (matches.isNotEmpty()) {
-                    matches
-                } else {
-                    getMockRecipesData().filter { it.estimatedCost <= budgetLimit }
+            } catch (e3: Exception) {
+                Log.e("CHEF_AI", "Cloud Gagal: ${e3.javaClass.simpleName} - ${e3.message}")
+                val errMsg = lastError?.message ?: e3.message ?: "Unknown Error"
+                generationProgress.value = when {
+                    errMsg.contains("API_KEY_INVALID", ignoreCase = true) ||
+                    errMsg.contains("API key not valid", ignoreCase = true) ->
+                        "ERROR: API Key tidak valid. Periksa kembali di pengaturan (ikon gir)."
+                    errMsg.contains("400") ->
+                        "ERROR 400: Permintaan tidak valid. Cek API Key di pengaturan."
+                    errMsg.contains("403") ->
+                        "ERROR 403: API Key tidak punya akses. Aktifkan Gemini API di Google AI Studio."
+                    errMsg.contains("404") ->
+                        "ERROR 404: Model tidak tersedia. Coba deteksi ulang model di pengaturan."
+                    errMsg.contains("429") ->
+                        "ERROR 429: Kuota API habis. Coba lagi nanti."
+                    errMsg.contains("UnknownHostException") || errMsg.contains("timeout", ignoreCase = true) ->
+                        "ERROR: Tidak ada koneksi internet."
+                    else ->
+                        "AI ERROR: $errMsg"
                 }
-
-                generatedRecipes.value = finalRecipes.shuffled().take(3)
             } finally {
                 isGenerating.value = false
             }
         }
     }
 
-    fun getMockRecipesData(): List<GeneratedRecipeMock> {
-        return listOf(
+    private fun createPrompt(budget: Double, ingredients: String) = """
+        Kamu adalah Chef Revan, ahli masakan anak kos Indonesia.
+        Buat 1 resep masakan hemat dengan budget Rp $budget menggunakan bahan: $ingredients.
+        
+        Balas HANYA dengan JSON murni (tanpa markdown, tanpa teks lain):
+        {
+          "name": "Nama Masakan",
+          "cost": total_estimasi_biaya_angka,
+          "description": "Deskripsi singkat masakan 1-2 kalimat",
+          "ingredients": [
+            {"name": "nama bahan", "amount": "jumlah dan satuan", "price": estimasi_harga_angka},
+            {"name": "nama bahan 2", "amount": "jumlah", "price": estimasi_harga_angka}
+          ],
+          "steps": [
+            "Langkah pertama yang jelas dan detail",
+            "Langkah kedua",
+            "Langkah ketiga dst"
+          ]
+        }
+    """.trimIndent()
+
+    private fun processResponse(text: String, selectedIngredients: List<String>) {
+        var cleanJson = text
+            .replace("```json", "")
+            .replace("```", "")
+            .trim()
+
+        val jsonStart = cleanJson.indexOf('{')
+        val jsonEnd = cleanJson.lastIndexOf('}')
+        if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
+            cleanJson = cleanJson.substring(jsonStart, jsonEnd + 1)
+        }
+
+        Log.d("CHEF_AI", "JSON setelah dibersihkan: $cleanJson")
+
+        val jsonObj = JSONObject(cleanJson)
+        val name = jsonObj.optString("name", "Resep Chef Revan")
+        val cost = jsonObj.optDouble("cost", 0.0)
+        val description = jsonObj.optString("description", "Kreasi Chef Revan AI.")
+
+        // Parse ingredients array
+        val ingredientsList = mutableListOf<Pair<String, Double>>()
+        val ingredientsArray = jsonObj.optJSONArray("ingredients")
+        if (ingredientsArray != null) {
+            for (i in 0 until ingredientsArray.length()) {
+                val item = ingredientsArray.optJSONObject(i)
+                if (item != null) {
+                    val iName = item.optString("name", "")
+                    val iAmount = item.optString("amount", "")
+                    val iPrice = item.optDouble("price", 0.0)
+                    val label = if (iAmount.isNotBlank()) "$iName ($iAmount)" else iName
+                    if (label.isNotBlank()) ingredientsList.add(label to iPrice)
+                }
+            }
+        }
+        // Fallback jika AI tidak mengembalikan array ingredients
+        if (ingredientsList.isEmpty()) {
+            if (selectedIngredients.isNotEmpty()) {
+                selectedIngredients.forEach { ingredientsList.add(it to (cost / selectedIngredients.size)) }
+            } else {
+                ingredientsList.add("Bahan sesuai selera" to cost)
+            }
+        }
+
+        // Parse steps array
+        val stepsList = mutableListOf<String>()
+        val stepsArray = jsonObj.optJSONArray("steps")
+        if (stepsArray != null) {
+            for (i in 0 until stepsArray.length()) {
+                val step = stepsArray.optString(i, "")
+                if (step.isNotBlank()) stepsList.add(step)
+            }
+        }
+        // Fallback jika AI mengembalikan steps sebagai string
+        if (stepsList.isEmpty()) {
+            val stepsStr = jsonObj.optString("steps", "")
+            if (stepsStr.isNotBlank()) {
+                // Coba split berdasarkan pola "1. 2. 3." atau "\n"
+                val split = stepsStr
+                    .split(Regex("(?=\\d+\\.)"))
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                stepsList.addAll(if (split.size > 1) split else listOf(stepsStr))
+            } else {
+                stepsList.add("Masak bahan-bahan sesuai selera.")
+            }
+        }
+
+        generatedRecipes.value = listOf(
             GeneratedRecipeMock(
-                "Nasi Telur Dadar Kribo",
-                6000.0,
-                "Resep kribo crispy super harum. Sangat nikmat dimakan dengan kecap manis dan nasi panas.",
-                listOf("Nasi/Beras" to 3000.0, "Telur" to 2000.0, "Minyak & Kecap" to 1000.0),
-                "Kocok telur dengan garam dan sedikit air. Tuangkan tinggi ke dalam minyak yang sangat panas. Goreng kering hingga kecokelatan."
-            ),
-            GeneratedRecipeMock(
-                "Tumis Tempe Kacang Panjang",
-                8000.0,
-                "Tumisan tempe manis gurih protein tinggi ditambah kacang panjang kaya serat segar.",
-                listOf("Tempe" to 3000.0, "Kacang Panjang" to 3000.0, "Bumbu Iris" to 2000.0),
-                "Potong tempe dadu kecil lalu goreng setengah kering. Tumis bawang bombay cabai bawang putih, masukkan kacang panjang dan tempe, kecap manis, garam merica."
-            ),
-            GeneratedRecipeMock(
-                "Mie Instan Nyemek Sosis",
-                9000.0,
-                "Kreasi mie instan favorit warkop. Kuah nyemek kental, pedas mantap ditambah sosis iris.",
-                listOf("Mie Instan" to 3500.0, "Sosis Sapi" to 3000.0, "Sawi Hijau" to 1500.0, "Telur" to 1000.0),
-                "Rebus mie 2 menit tiriskan. Tumis bawang putih cabai merah, masukkan sosis, air secukupnya. Tambahkan mie, bumbu instan, telur dikocok lepas hingga kuah mengental."
-            ),
-            GeneratedRecipeMock(
-                "Tahu Cabe Garam Rice Cooker",
-                7000.0,
-                "Tahu goreng kering berlumur irisan bawang putih, cabai rawit pedas dan daun bawang wangi.",
-                listOf("Tahu Sutra/Putih" to 3000.0, "Cabai rawit & Bawang" to 2000.0, "Tepung Bumbu" to 2000.0),
-                "Balut tahu dengan tepung basah lalu kering. Masak di rice cooker dengan minyak hingga kecokelatan. Masukkan bawang cabai garam penyedap, tumis rata."
-            ),
-            GeneratedRecipeMock(
-                "Sarden Campur Kentang Goreng",
-                15000.0,
-                "Sarden saus tomat kaya gizi dipadu kentang goreng empuk. Pas disajikan untuk porsi berdua.",
-                listOf("Sarden Kaleng Kecil" to 10000.0, "Kentang Sedang" to 3000.0, "Bawang Iris" to 2000.0),
-                "Kupas kentang lalu goreng dadu. Tumis bawang bombay iris cabai rawit, tuang sarden kaleng, masukkan kentang goreng, masak hingga bumbu meresap."
-            ),
-            GeneratedRecipeMock(
-                "Tumis Kangkung Belacan",
-                6000.0,
-                "Kangkung warung tenda. Kangkung tumis super cepat dengan bumbu terasi bakar gurih pedas.",
-                listOf("Kangkung 1 Ikat" to 3000.0, "Bumbu Terasi & Cabai" to 3000.0),
-                "Panaskan minyak, tumis bumbu ulek terasi cabai bawang merah bawang putih. Masukkan kangkung dan air sedikit, aduk cepat dengan api besar hingga layu."
-            ),
-            GeneratedRecipeMock(
-                "Ayam Kecap Rice Cooker",
-                18000.0,
-                "Resep mewah akhir bulan. Ayam empuk berbalut saus kecap kental gurih, cukup dimasak dalam rice cooker.",
-                listOf("Ayam Potong 250g" to 12000.0, "Bawang Bombay & Putih" to 3000.0, "Kecap Manis & Saus" to 3000.0),
-                "Marinate ayam dengan kecap manis dan lada. Tata irisan bawang bombay di dasar rice cooker, taruh ayam di atasnya. Masak hingga tombol rice cooker berpindah."
+                name = name,
+                estimatedCost = cost,
+                description = description,
+                ingredients = ingredientsList,
+                steps = stepsList
             )
         )
     }

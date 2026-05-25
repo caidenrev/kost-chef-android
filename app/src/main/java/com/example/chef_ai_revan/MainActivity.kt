@@ -2,6 +2,7 @@ package com.example.chef_ai_revan
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -15,12 +16,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
+import java.util.concurrent.atomic.AtomicBoolean
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -34,6 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.chef_ai_revan.ui.components.ApiKeySettingsDialog
+import com.example.chef_ai_revan.ui.components.MasakinLogo
+import com.example.chef_ai_revan.ui.components.MasakinSplashScreen
+import com.example.chef_ai_revan.ui.components.NeoToastHost
+import com.example.chef_ai_revan.ui.components.neoShadow
 import com.example.chef_ai_revan.ui.navigation.Screen
 import com.example.chef_ai_revan.ui.navigation.SetupNavGraph
 import com.example.chef_ai_revan.ui.theme.*
@@ -41,14 +55,30 @@ import com.example.chef_ai_revan.viewmodel.BudgetViewModel
 
 class MainActivity : ComponentActivity() {
 
+    private val isAppReady = AtomicBoolean(false)
+
     private val budgetViewModel: BudgetViewModel by viewModels {
         BudgetViewModel.Factory((application as ChefAiApplication).repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { !isAppReady.get() }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            var showSplash by remember { mutableStateOf(true) }
+
+            LaunchedEffect(Unit) {
+                // Tutup overlay splash sistem (icon bulat) agar logo Compose tampil full
+                isAppReady.set(true)
+                delay(900)
+                showSplash = false
+            }
+
+            if (showSplash) {
+                MasakinSplashScreen()
+            } else {
             ChefairevanTheme {
                 val navController = rememberNavController()
                 Scaffold(
@@ -60,6 +90,7 @@ class MainActivity : ComponentActivity() {
                         NeoBottomNavigation(navController)
                     }
                 ) { innerPadding ->
+                    Box(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -93,7 +124,23 @@ class MainActivity : ComponentActivity() {
                             budgetViewModel = budgetViewModel
                         )
                     }
+                        NeoToastHost(
+                            modifier = Modifier.padding(
+                                top = innerPadding.calculateTopPadding() + 8.dp,
+                                start = 16.dp,
+                                end = 16.dp
+                            )
+                        )
+                        val showApiSettings by budgetViewModel.showApiSettingsDialog.collectAsStateWithLifecycle()
+                        if (showApiSettings) {
+                            ApiKeySettingsDialog(
+                                viewModel = budgetViewModel,
+                                onDismiss = { budgetViewModel.showApiSettingsDialog.value = false }
+                            )
+                        }
+                    }
                 }
+            }
             }
         }
     }
@@ -101,7 +148,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MasakinTopBar(viewModel: BudgetViewModel) {
-    val syncEmail by viewModel.syncEmail.collectAsStateWithLifecycle()
     val isWarning by viewModel.isWeeklyBudgetWarning.collectAsStateWithLifecycle()
 
     Row(
@@ -117,22 +163,16 @@ fun MasakinTopBar(viewModel: BudgetViewModel) {
                 )
             }
             .statusBarsPadding()
-            .height(64.dp)
+            .height(72.dp)
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "MASAKIN by Revan",
-                fontWeight = FontWeight.Black,
-                fontSize = 18.sp,
-                color = NeoBlack,
-                letterSpacing = 0.5.sp
-            )
+            MasakinLogo(height = 52.dp)
             if (isWarning) {
                 Box(
                     modifier = Modifier
@@ -141,34 +181,19 @@ fun MasakinTopBar(viewModel: BudgetViewModel) {
                 )
             }
         }
-
-        // Sync Status Chip
-        val isSynced = syncEmail != null
-        Row(
+        IconButton(
+            onClick = { viewModel.showApiSettingsDialog.value = true },
             modifier = Modifier
-                .background(if (isSynced) NeoGreen else Color.LightGray, shape = RoundedCornerShape(12.dp))
-                .border(2.dp, NeoBlack, shape = RoundedCornerShape(12.dp))
-                .clickable {
-                    if (isSynced) {
-                        viewModel.logoutGoogleSync()
-                    } else {
-                        viewModel.triggerGoogleCloudSync()
-                    }
-                }
-                .padding(vertical = 6.dp, horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .size(44.dp)
+                .neoShadow(offsetX = 3.dp, offsetY = 3.dp, borderRadius = 22.dp)
+                .background(NeoYellow, shape = CircleShape)
+                .border(2.dp, NeoBlack, shape = CircleShape)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(if (isSynced) NeoBlack else Color.DarkGray, shape = CircleShape)
-            )
-            Text(
-                text = if (isSynced) "CLOUD SYNC" else "OFFLINE",
-                fontWeight = FontWeight.Black,
-                fontSize = 10.sp,
-                color = NeoBlack
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Pengaturan API Key",
+                tint = NeoBlack,
+                modifier = Modifier.size(24.dp)
             )
         }
     }

@@ -1,6 +1,5 @@
 package com.example.chef_ai_revan.ui.screens
 
-import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +31,7 @@ import com.example.chef_ai_revan.viewmodel.BudgetViewModel
 import com.example.chef_ai_revan.viewmodel.GeneratedRecipeMock
 import java.text.NumberFormat
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 @Composable
 fun DashboardScreen(viewModel: BudgetViewModel) {
@@ -41,7 +41,6 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
     val isGenerating by viewModel.isGenerating.collectAsStateWithLifecycle()
     val generationProgress by viewModel.generationProgress.collectAsStateWithLifecycle()
     val generatedRecipes by viewModel.generatedRecipes.collectAsStateWithLifecycle()
-
     var activeSubTab by remember { mutableStateOf("GENERATOR") } // GENERATOR or WISHLIST
 
     // UI Configuration Inputs
@@ -202,37 +201,10 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                 )
             }
 
-            // Terminal style loader or AI Recipe Results
+            // Loading card atau hasil resep
             if (isGenerating) {
                 item {
-                    NeoCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = NeoBlack
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            CircularProgressIndicator(color = NeoCyan)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "TERMINAL DOKUMEN GEMINI AI:",
-                                color = NeoGreen,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Text(
-                                text = "> $generationProgress",
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 13.sp,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
+                    LoadingRecipeCard(progress = generationProgress)
                 }
             } else if (generatedRecipes.isNotEmpty()) {
                 item {
@@ -253,17 +225,17 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                         onFavoriteToggle = {
                             if (isFavorite) {
                                 viewModel.removeRecipeFromFavoritesByName(recipe.name)
-                                Toast.makeText(context, "Dihapus dari Wishlist!", Toast.LENGTH_SHORT).show()
+                                NeoToastState.show("Dihapus dari Wishlist!", NeoToastType.DELETE)
                             } else {
                                 viewModel.addRecipeToFavorites(recipe)
-                                Toast.makeText(context, "Disimpan ke Wishlist!", Toast.LENGTH_SHORT).show()
+                                NeoToastState.show("Disimpan ke Wishlist!", NeoToastType.SUCCESS)
                             }
                         },
                         onAddGrocery = {
                             recipe.ingredients.forEach { (name, cost) ->
                                 viewModel.addGroceryItem(name, cost)
                             }
-                            Toast.makeText(context, "Bahan dimasukkan ke daftar belanja!", Toast.LENGTH_SHORT).show()
+                            NeoToastState.show("Bahan dimasukkan ke daftar belanja!", NeoToastType.SUCCESS)
                         },
                         onExportPdf = {
                             val ingredientsStrList = recipe.ingredients.map { "${it.first} (${currencyFormatter.format(it.second)})" }
@@ -271,7 +243,7 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                                 context = context,
                                 title = recipe.name,
                                 cost = currencyFormatter.format(recipe.estimatedCost),
-                                description = recipe.description + "\n\nInstruksi:\n" + recipe.instructions,
+                                description = recipe.description + "\n\nCara Memasak:\n" + recipe.steps.mapIndexed { i, s -> "${i+1}. $s" }.joinToString("\n"),
                                 ingredients = ingredientsStrList
                             )
                         },
@@ -325,7 +297,7 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                         currencyFormatter = currencyFormatter,
                         onDelete = {
                             viewModel.removeFavorite(fav)
-                            Toast.makeText(context, "Dihapus dari Wishlist!", Toast.LENGTH_SHORT).show()
+                            NeoToastState.show("Dihapus dari Wishlist!", NeoToastType.DELETE)
                         },
                         onAddGrocery = {
                             // Extract ingredient list string "Telur:2000,Tempe:3000"
@@ -338,7 +310,7 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                                     viewModel.addGroceryItem(name, cost)
                                 }
                             }
-                            Toast.makeText(context, "Bahan dimasukkan ke daftar belanja!", Toast.LENGTH_SHORT).show()
+                            NeoToastState.show("Bahan dimasukkan ke daftar belanja!", NeoToastType.SUCCESS)
                         },
                         onExportPdf = {
                             val parts = fav.ingredientsList.split(",")
@@ -407,13 +379,11 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                                     .clickable {
                                         viewModel.addRecipeToWeeklyPlan(
                                             dayIndex = index,
-                                            recipeName = selectedRecipeForDay!!.name,
-                                            cost = selectedRecipeForDay!!.estimatedCost,
-                                            description = selectedRecipeForDay!!.description
+                                            recipe = selectedRecipeForDay!!
                                         )
                                         showDayPickerDialog = false
                                         selectedRecipeForDay = null
-                                        Toast.makeText(context, "Berhasil masuk ke jadwal $day!", Toast.LENGTH_SHORT).show()
+                                        NeoToastState.show("Berhasil masuk ke jadwal $day!", NeoToastType.SUCCESS)
                                     }
                                     .padding(vertical = 10.dp, horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -452,12 +422,15 @@ fun RecipeItemCard(
     onExportPdf: () -> Unit,
     onAddToPlanner: () -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     NeoCard(
         modifier = Modifier.fillMaxWidth(),
         backgroundColor = NeoWhite
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            // Title + favorite
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+            // ── Header: nama + favorit ──────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -474,18 +447,17 @@ fun RecipeItemCard(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Simpan",
                         tint = if (isFavorite) NeoPink else NeoBlack,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
 
-            // Price badge
+            // ── Harga + deskripsi singkat ───────────────────────────────────
             Row(
                 modifier = Modifier
                     .background(accentColor, shape = RoundedCornerShape(8.dp))
                     .border(2.dp, NeoBlack, shape = RoundedCornerShape(8.dp))
-                    .padding(vertical = 4.dp, horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 4.dp, horizontal = 10.dp)
             ) {
                 Text(
                     text = "ESTIMASI: " + currencyFormatter.format(recipe.estimatedCost),
@@ -495,33 +467,147 @@ fun RecipeItemCard(
                 )
             }
 
-            // Description
             Text(
                 text = recipe.description,
-                fontSize = 13.sp
+                fontSize = 13.sp,
+                color = Color.DarkGray
             )
 
-            // Ingredients
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = "BAHAN-BAHAN:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                recipe.ingredients.forEach { (name, cost) ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "• $name", fontSize = 12.sp)
-                        Text(text = currencyFormatter.format(cost), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            // ── Tombol lihat/tutup detail ───────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (isExpanded) NeoBlack else Color(0xFFF0F0F0),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .border(1.5.dp, NeoBlack, shape = RoundedCornerShape(8.dp))
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        tint = if (isExpanded) Color.White else NeoBlack,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = if (isExpanded) "TUTUP DETAIL" else "LIHAT BAHAN & CARA MASAK",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 12.sp,
+                        color = if (isExpanded) Color.White else NeoBlack
+                    )
+                }
+                Text(
+                    text = "${recipe.ingredients.size} bahan  •  ${recipe.steps.size} langkah",
+                    fontSize = 11.sp,
+                    color = if (isExpanded) Color.White.copy(alpha = 0.7f) else Color.Gray
+                )
+            }
+
+            // ── Detail (collapsed/expanded) ─────────────────────────────────
+            if (isExpanded) {
+                HorizontalDivider(color = NeoBlack.copy(alpha = 0.1f))
+
+                // Bahan-bahan
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = NeoBlack
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "BAHAN-BAHAN", fontWeight = FontWeight.Black, fontSize = 13.sp)
+                    }
+                    recipe.ingredients.forEach { (name, cost) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(6.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(accentColor, shape = CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = name, fontSize = 12.sp)
+                            }
+                            if (cost > 0) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = currencyFormatter.format(cost),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = NeoPrimary
+                                )
+                            }
+                        }
                     }
                 }
+
+                HorizontalDivider(color = NeoBlack.copy(alpha = 0.1f))
+
+                // Cara memasak
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MenuBook,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = NeoBlack
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "CARA MEMASAK", fontWeight = FontWeight.Black, fontSize = 13.sp)
+                    }
+                    recipe.steps.forEachIndexed { index, step ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(NeoBlack, shape = CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${index + 1}",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                            Text(
+                                text = step.trimStart { it.isDigit() || it == '.' || it == ' ' },
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f),
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = NeoBlack.copy(alpha = 0.1f))
             }
 
-            // Instructions
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = "CARA MASAK:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text(text = recipe.instructions, fontSize = 12.sp)
-            }
-
-            // Actions row
+            // ── Action buttons ──────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -545,7 +631,7 @@ fun RecipeItemCard(
                     onClick = onExportPdf,
                     backgroundColor = NeoPrimary,
                     contentColor = Color.White,
-                    modifier = Modifier.width(80.dp),
+                    modifier = Modifier.width(72.dp),
                     borderRadius = 8.dp
                 )
             }
@@ -604,7 +690,7 @@ fun FavoriteItemCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 NeoButton(
-                    text = "BELANJAAN",
+                    text = "BELANJA",
                     onClick = onAddGrocery,
                     backgroundColor = NeoGreen,
                     modifier = Modifier.weight(1f),
@@ -618,6 +704,77 @@ fun FavoriteItemCard(
                     modifier = Modifier.weight(1f),
                     borderRadius = 8.dp
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingRecipeCard(progress: String) {
+    val friendlyMessages = listOf(
+        "Chef Revan sedang berpikir...",
+        "Meracik resep terbaik untukmu...",
+        "Memilih bumbu yang pas...",
+        "Menghitung budget dengan cermat...",
+        "Hampir selesai, sabar ya!"
+    )
+    var messageIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1800)
+            messageIndex = (messageIndex + 1) % friendlyMessages.size
+        }
+    }
+
+    NeoCard(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = NeoPurple
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = NeoYellow,
+                strokeWidth = 4.dp
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = NeoYellow,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = friendlyMessages[messageIndex],
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+            if (progress.startsWith("ERROR")) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(NeoPink.copy(alpha = 0.3f), shape = RoundedCornerShape(8.dp))
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = progress,
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }

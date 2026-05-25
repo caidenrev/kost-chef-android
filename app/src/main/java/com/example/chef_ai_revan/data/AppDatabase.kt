@@ -9,7 +9,7 @@ import com.example.chef_ai_revan.data.entity.*
 
 @Database(
     entities = [Budget::class, GroceryItem::class, FavoriteRecipe::class, WeeklyPlan::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
