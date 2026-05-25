@@ -8,7 +8,7 @@
 <p align="center">Dibuat oleh <strong>Revan</strong></p>
 
 <p align="center">
-  <a href="https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.0.apk"><strong>Unduh APK (v1.0)</strong></a>
+  <a href="https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.1.apk"><strong>Unduh APK (v1.1)</strong></a>
   &nbsp;|&nbsp;
   <a href="https://github.com/caidenrev/kost-chef-android/releases">Semua Rilis</a>
 </p>
@@ -21,33 +21,35 @@ Instal langsung di HP Android tanpa Play Store (APK **release signed**, siap pas
 
 | | |
 |---|---|
-| **Versi** | 1.0 (`versionCode` 1) |
+| **Versi** | 1.1 (`versionCode` 2) |
 | **Ukuran** | ~16–22 MB |
 | **Min. Android** | 7.0 (API 24) |
 | **Package** | `com.example.chef_ai_revan` |
-| **Unduh langsung** | [MASAKIN-v1.0.apk](https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.0.apk) |
+| **Unduh langsung** | [MASAKIN-v1.1.apk](https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.1.apk) |
 | **Halaman rilis** | [GitHub Releases](https://github.com/caidenrev/kost-chef-android/releases) |
 
 ### Cara instal di HP
 
-1. **Hapus dulu** app MASAKIN lama jika pernah terpasang (Settings > Apps > MASAKIN > Uninstall). Wajib jika sebelumnya install dari Android Studio / APK lain.
-2. Unduh `MASAKIN-v1.0.apk` sampai selesai (cek ukuran file, jangan ~1 KB — itu berarti unduhan gagal).
-3. Buka file dari **Files** atau **Downloads** (bukan hanya preview di browser).
-4. Aktifkan **Install unknown apps** / **Sumber tidak dikenal** untuk app yang dipakai buka APK.
-5. Tap **Install**. Jika muncul Play Protect, tap **Install anyway** / **Tetap instal**.
-6. Buka MASAKIN > Settings (ikon kuning) > masukkan Gemini API Key.
+1. Jika **sudah punya MASAKIN v1.0** dari APK GitHub ini: unduh `MASAKIN-v1.1.apk` lalu tap **Update** / **Install** — data tetap, **tidak perlu uninstall**.
+2. Jika **belum pernah** pasang, atau instal dari Android Studio dengan build **debug lama** (signature beda): uninstall sekali, lalu instal `MASAKIN-v1.1.apk`.
+3. Unduh APK sampai selesai (cek ukuran ~16–22 MB, bukan ~1 KB).
+4. Buka file dari **Files** atau **Downloads** (bukan hanya preview di browser).
+5. Aktifkan **Install unknown apps** / **Sumber tidak dikenal** untuk app yang dipakai buka APK.
+6. Tap **Install** / **Update**. Jika muncul Play Protect, tap **Install anyway** / **Tetap instal**.
+7. Buka MASAKIN > Settings (ikon kuning) > masukkan Gemini API Key.
 
 ### APK tidak mau instal?
 
 | Gejala | Solusi |
 |--------|--------|
-| "App not installed" | Uninstall versi lama dulu; unduh ulang APK |
-| "Package conflicts" | Ada instalasi lama dengan signature beda — uninstall semua versi MASAKIN |
+| "App not installed" | Signature beda — uninstall sekali, instal ulang v1.1; atau unduh ulang APK |
+| "Package conflicts" | Versi lama dari build debug/studio — uninstall sekali, lalu instal v1.1 |
+| Installer force close saat "Preparing" | Unduh ulang APK (jangan lewat WhatsApp); cek ruang penyimpanan; matikan VPN sementara |
 | File cuma beberapa KB | Link GitHub belum di-push; unduh ulang dari repo yang sudah update |
 | Play Protect memblokir | Tap **More details** > **Install anyway** |
 | Parse error | File corrupt — unduh ulang, jangan kirim lewat WhatsApp (compress) |
 
-> Build ulang APK release: `.\gradlew.bat assembleRelease` lalu salin ke `releases/MASAKIN-v1.0.apk`
+> Build ulang APK release: `.\gradlew.bat assembleRelease` lalu salin ke `releases/MASAKIN-v1.1.apk`
 
 ---
 

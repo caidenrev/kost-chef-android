@@ -63,15 +63,13 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
-        splashScreen.setKeepOnScreenCondition { !isAppReady.get() }
+        installSplashScreen().setKeepOnScreenCondition { !isAppReady.get() }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             var showSplash by remember { mutableStateOf(true) }
 
             LaunchedEffect(Unit) {
-                // Tutup overlay splash sistem (icon bulat) agar logo Compose tampil full
                 isAppReady.set(true)
                 delay(900)
                 showSplash = false

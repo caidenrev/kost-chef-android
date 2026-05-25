@@ -129,8 +129,7 @@ fun ApiKeySettingsDialog(
                     NeoButton(
                         text = "TUTUP",
                         onClick = onDismiss,
-                        backgroundColor = NeoBlack,
-                        contentColor = Color.White,
+                        backgroundColor = NeoCyan,
                         modifier = Modifier.fillMaxWidth(),
                         borderRadius = 8.dp
                     )

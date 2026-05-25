@@ -85,8 +85,7 @@ fun BudgetScreen(viewModel: BudgetViewModel) {
                                     NeoToastState.show("Budget diinisialisasi!", NeoToastType.SUCCESS)
                                 }
                             },
-                            backgroundColor = NeoBlack,
-                            contentColor = Color.White,
+                            backgroundColor = NeoCyan,
                             modifier = Modifier.fillMaxWidth(),
                             borderRadius = 8.dp
                         )
@@ -193,8 +192,7 @@ fun BudgetScreen(viewModel: BudgetViewModel) {
                                     NeoToastState.show("Limit diperbarui!", NeoToastType.SUCCESS)
                                 }
                             },
-                            backgroundColor = NeoBlack,
-                            contentColor = Color.White,
+                            backgroundColor = NeoPurple,
                             modifier = Modifier.fillMaxWidth(),
                             borderRadius = 8.dp
                         )

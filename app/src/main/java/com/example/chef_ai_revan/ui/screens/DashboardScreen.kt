@@ -127,7 +127,7 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                                 Box(
                                     modifier = Modifier
                                         .background(
-                                            if (isSelected) NeoBlack else NeoWhite,
+                                            if (isSelected) NeoYellow else NeoWhite,
                                             shape = RoundedCornerShape(20.dp)
                                         )
                                         .border(2.dp, NeoBlack, shape = RoundedCornerShape(20.dp))
@@ -144,7 +144,7 @@ fun DashboardScreen(viewModel: BudgetViewModel) {
                                         text = ingredient,
                                         fontWeight = FontWeight.Black,
                                         fontSize = 12.sp,
-                                        color = if (isSelected) NeoWhite else NeoBlack
+                                        color = NeoBlack
                                     )
                                 }
                             }
@@ -478,7 +478,7 @@ fun RecipeItemCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        if (isExpanded) NeoBlack else Color(0xFFF0F0F0),
+                        if (isExpanded) accentColor else Color(0xFFF0F0F0),
                         shape = RoundedCornerShape(8.dp)
                     )
                     .border(1.5.dp, NeoBlack, shape = RoundedCornerShape(8.dp))
@@ -494,20 +494,20 @@ fun RecipeItemCard(
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = null,
-                        tint = if (isExpanded) Color.White else NeoBlack,
+                        tint = NeoBlack,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
                         text = if (isExpanded) "TUTUP DETAIL" else "LIHAT BAHAN & CARA MASAK",
                         fontWeight = FontWeight.Black,
                         fontSize = 12.sp,
-                        color = if (isExpanded) Color.White else NeoBlack
+                        color = NeoBlack
                     )
                 }
                 Text(
                     text = "${recipe.ingredients.size} bahan  •  ${recipe.steps.size} langkah",
                     fontSize = 11.sp,
-                    color = if (isExpanded) Color.White.copy(alpha = 0.7f) else Color.Gray
+                    color = if (isExpanded) NeoBlack.copy(alpha = 0.6f) else Color.Gray
                 )
             }
 
@@ -584,12 +584,12 @@ fun RecipeItemCard(
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .background(NeoBlack, shape = CircleShape),
+                                    .background(accentColor, shape = CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "${index + 1}",
-                                    color = Color.White,
+                                    color = NeoBlack,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Black
                                 )
@@ -699,8 +699,7 @@ fun FavoriteItemCard(
                 NeoButton(
                     text = "EKSPOR PDF",
                     onClick = onExportPdf,
-                    backgroundColor = NeoBlack,
-                    contentColor = Color.White,
+                    backgroundColor = NeoPurple,
                     modifier = Modifier.weight(1f),
                     borderRadius = 8.dp
                 )

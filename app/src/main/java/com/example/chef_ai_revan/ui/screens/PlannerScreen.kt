@@ -149,8 +149,7 @@ fun PlannerScreen(viewModel: BudgetViewModel) {
                     viewModel.clearAllWeeklyPlans()
                     NeoToastState.show("Jadwal mingguan dikosongkan!", NeoToastType.DELETE)
                 },
-                backgroundColor = NeoBlack,
-                contentColor = Color.White,
+                backgroundColor = NeoPink,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -270,7 +269,7 @@ fun DayPlannerCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                if (isExpanded) NeoBlack else Color(0xFFF0F0F0),
+                                if (isExpanded) accentColor else Color(0xFFF0F0F0),
                                 shape = RoundedCornerShape(8.dp)
                             )
                             .border(1.5.dp, NeoBlack, shape = RoundedCornerShape(8.dp))
@@ -286,20 +285,20 @@ fun DayPlannerCard(
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                 contentDescription = null,
-                                tint = if (isExpanded) Color.White else NeoBlack,
+                                tint = NeoBlack,
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
                                 text = if (isExpanded) "TUTUP DETAIL" else "LIHAT DETAIL RESEP",
                                 fontWeight = FontWeight.Black,
                                 fontSize = 12.sp,
-                                color = if (isExpanded) Color.White else NeoBlack
+                                color = NeoBlack
                             )
                         }
                         Text(
                             text = "${ingredients.size} bahan  •  ${steps.size} langkah",
                             fontSize = 11.sp,
-                            color = if (isExpanded) Color.White.copy(alpha = 0.7f) else Color.Gray
+                            color = if (isExpanded) NeoBlack.copy(alpha = 0.6f) else Color.Gray
                         )
                     }
                 }
@@ -388,12 +387,12 @@ fun DayPlannerCard(
                                     Box(
                                         modifier = Modifier
                                             .size(22.dp)
-                                            .background(NeoBlack, shape = CircleShape),
+                                            .background(accentColor, shape = CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = "${index + 1}",
-                                            color = Color.White,
+                                            color = NeoBlack,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Black
                                         )
