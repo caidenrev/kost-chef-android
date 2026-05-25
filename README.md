@@ -7,6 +7,36 @@
 <p align="center">Aplikasi Android untuk perencanaan masak, budget Rupiah, dan generator resep berbasis AI.</p>
 <p align="center">Dibuat oleh <strong>Revan</strong></p>
 
+<p align="center">
+  <a href="https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.0.apk"><strong>Unduh APK (v1.0)</strong></a>
+  &nbsp;|&nbsp;
+  <a href="https://github.com/caidenrev/kost-chef-android/releases">Semua Rilis</a>
+</p>
+
+---
+
+## Unduh APK
+
+Instal langsung di HP Android tanpa Play Store (versi debug untuk percobaan).
+
+| | |
+|---|---|
+| **Versi** | 1.0 (`versionCode` 1) |
+| **Ukuran** | ~22 MB |
+| **Min. Android** | 7.0 (API 24) |
+| **Unduh langsung** | [MASAKIN-v1.0.apk](https://github.com/caidenrev/kost-chef-android/raw/main/releases/MASAKIN-v1.0.apk) |
+| **Halaman rilis** | [GitHub Releases](https://github.com/caidenrev/kost-chef-android/releases) |
+
+### Cara instal di HP
+
+1. Unduh file `MASAKIN-v1.0.apk` ke ponsel.
+2. Buka file APK (Files / Downloads).
+3. Jika diminta, aktifkan **Install dari sumber tidak dikenal** untuk browser atau file manager yang dipakai.
+4. Tap **Install**.
+5. Buka MASAKIN, masukkan **Gemini API Key** lewat tombol Settings (ikon gerigi kuning di header).
+
+> **Catatan:** APK di folder `releases/` adalah build debug untuk distribusi cepat. Untuk Play Store gunakan AAB release yang sudah di-sign.
+
 ---
 
 ## Ringkasan
@@ -101,8 +131,8 @@ Header global: logo MASAKIN + tombol Settings (kuning) untuk API Key.
 ### 1. Clone proyek
 
 ```bash
-git clone <url-repository-anda> chefairevan
-cd chefairevan
+git clone https://github.com/caidenrev/kost-chef-android.git
+cd kost-chef-android
 ```
 
 ### 2. `local.properties`

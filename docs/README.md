@@ -14,4 +14,8 @@ Indeks dokumentasi teknis proyek MASAKIN.
 | [API.md](API.md) | Gemini API, deteksi model, fallback Vercel |
 | [PLAYSTORE.md](PLAYSTORE.md) | Panduan rilis Google Play Store |
 
+## Unduh APK
+
+File APK: folder [`releases/`](../releases/) dan [README utama](../README.md#unduh-apk).
+
 Kembali ke [README utama](../README.md).
